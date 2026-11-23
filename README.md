@@ -170,3 +170,35 @@ Never commit raw datasets, large model checkpoints, credentials, or local enviro
 - Record all exclusions and their reasons.
 - Do not write “significant” unless an appropriate statistical test supports it.
 - Clearly label synthetic benchmark results versus real ML-task results.
+
+## 10. Development
+
+Requires Python 3.11 or 3.12 and pip ≥ 25.1 (for `--group`).
+
+```bash
+python -m venv .venv
+# Windows: .venv\Scripts\activate    Linux/macOS: source .venv/bin/activate
+python -m pip install --upgrade "pip>=25.1"
+python -m pip install -c requirements/constraints-py312.txt -e . --group dev
+pre-commit install            # optional: run checks on every commit
+```
+
+Quality checks (CI runs the same commands; `make check` runs them all where `make` is available):
+
+```bash
+python -m ruff check .
+python -m ruff format --check .
+python -m mypy
+python -m pytest --cov
+python -m evooptlab validate-config configs/*.yaml          # pilot: reports open decisions
+python -m evooptlab validate-config --strict configs/*.yaml # final runs: open decisions are errors
+```
+
+Other CLI commands: `evooptlab version`, `evooptlab env` (environment metadata as JSON) and
+`evooptlab schema run-metadata` (the JSON Schema committed at `docs/schemas/run_metadata.schema.json`).
+
+## 11. Project status
+
+Progress is tracked per phase in [`docs/phase_status.md`](docs/phase_status.md). Foundation decisions,
+pilot vs. final settings, open protocol questions, and deviations from the structure in §5 are recorded
+in [`docs/decisions/0001-foundation-and-protocol-decisions.md`](docs/decisions/0001-foundation-and-protocol-decisions.md).
