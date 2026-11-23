@@ -83,3 +83,18 @@ A well-executed empirical study is a valid engineering/research portfolio projec
 - Implementation differences between library and custom algorithms.
 
 Discuss these explicitly in the paper.
+
+## Protocol status
+
+*Added in Phase 00 (2026-11-23).*
+
+- RQ1–RQ4 and the example hypotheses above are the **provisional draft** of the pre-registered plan.
+  They are not results and have not been tested.
+- The literature review has **not started**. The matrix is set up in
+  `docs/literature/literature_matrix.csv` and has no entries. Until it is complete, the gaps listed
+  above stay hypotheses.
+- Open decisions that affect validity (budgets, seeds, algorithm variants, HV reference points,
+  statistical tests, HPO task definitions) are tracked in
+  `docs/decisions/0001-foundation-and-protocol-decisions.md`.
+- The `protocol-v1` freeze (experimental protocol §9) happens only after those decisions are resolved
+  and the owner has reviewed them.
