@@ -1,0 +1,61 @@
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.venv/
+venv/
+.env
+.env.*
+data/raw/*
+data/interim/*
+data/processed/*
+!data/README.md
+artifacts/
+mlruns/
+*.pt
+*.pth
+*.onnx
+*.parquet
+.DS_Store
+Thumbs.db
+
+# --- Build / packaging ---
+build/
+dist/
+*.egg-info/
+.eggs/
+
+# --- Test & coverage output ---
+.coverage
+.coverage.*
+coverage.xml
+htmlcov/
+.tox/
+.nox/
+
+# --- Notebooks / editors / local tooling ---
+.ipynb_checkpoints/
+.idea/
+.vscode/
+.claude/settings.local.json
+
+# --- Secrets & keys (never commit) ---
+*.pem
+*.key
+id_rsa*
+id_ed25519*
+credentials*.json
+secrets*.yaml
+
+# --- Model weights, checkpoints, bulky outputs ---
+*.ckpt
+*.h5
+*.joblib
+*.pkl
+*.safetensors
+*.npz
+*.log
+*.tmp
+outputs/
+reports/**/_generated/

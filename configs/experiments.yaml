@@ -1,0 +1,22 @@
+experiment:
+  name: evooptlab_pilot
+  output_dir: artifacts/experiments
+  master_seed: 2026
+  algorithms:
+    - random_search
+    - nsga2
+    - differential_evolution_variant
+    - particle_swarm_variant
+  budget:
+    unit: objective_evaluations
+    max_evaluations: 10000
+  execution:
+    n_jobs: 1
+    timeout_seconds: 3600
+  logging:
+    level: INFO
+    save_history: true
+    save_population: true
+  reproducibility:
+    record_git_commit: true
+    record_environment: true

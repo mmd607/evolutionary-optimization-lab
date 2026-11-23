@@ -1,0 +1,22 @@
+benchmark_suite:
+  name: core_multiobjective_v1
+  problems:
+    - name: ZDT1
+      objectives: 2
+      variables: 30
+    - name: ZDT2
+      objectives: 2
+      variables: 30
+    - name: ZDT3
+      objectives: 2
+      variables: 30
+    - name: DTLZ2
+      objectives: 3
+      variables: 12
+    - name: DTLZ7
+      objectives: 3
+      variables: 22
+  evaluation_budget: 10000
+  seeds: [11, 23, 37, 41, 59]
+  # Pilot values only. Increase repeated runs for final study after compute estimate.
+  pilot: true

@@ -1,0 +1,236 @@
+{
+  "$defs": {
+    "HardwareInfo": {
+      "additionalProperties": false,
+      "properties": {
+        "cpu": {
+          "title": "Cpu",
+          "type": "string"
+        },
+        "gpu": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Gpu"
+        },
+        "ram_gb": {
+          "anyOf": [
+            {
+              "exclusiveMinimum": 0,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Ram Gb"
+        }
+      },
+      "required": [
+        "cpu"
+      ],
+      "title": "HardwareInfo",
+      "type": "object"
+    },
+    "SoftwareInfo": {
+      "additionalProperties": false,
+      "properties": {
+        "python": {
+          "title": "Python",
+          "type": "string"
+        },
+        "packages_lock_hash": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Packages Lock Hash"
+        },
+        "packages": {
+          "additionalProperties": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "title": "Packages",
+          "type": "object"
+        }
+      },
+      "required": [
+        "python"
+      ],
+      "title": "SoftwareInfo",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "description": "Immutable description of a single optimization run.",
+  "properties": {
+    "schema_version": {
+      "const": "1",
+      "default": "1",
+      "title": "Schema Version",
+      "type": "string"
+    },
+    "run_id": {
+      "minLength": 1,
+      "title": "Run Id",
+      "type": "string"
+    },
+    "project": {
+      "const": "EvoOptLab",
+      "default": "EvoOptLab",
+      "title": "Project",
+      "type": "string"
+    },
+    "git_commit": {
+      "anyOf": [
+        {
+          "pattern": "^[0-9a-f]{40}$",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Git Commit"
+    },
+    "git_dirty": {
+      "anyOf": [
+        {
+          "type": "boolean"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Git Dirty"
+    },
+    "algorithm": {
+      "minLength": 1,
+      "title": "Algorithm",
+      "type": "string"
+    },
+    "problem": {
+      "minLength": 1,
+      "title": "Problem",
+      "type": "string"
+    },
+    "seed": {
+      "minimum": 0,
+      "title": "Seed",
+      "type": "integer"
+    },
+    "objective_evaluation_budget": {
+      "exclusiveMinimum": 0,
+      "title": "Objective Evaluation Budget",
+      "type": "integer"
+    },
+    "started_at_utc": {
+      "format": "date-time",
+      "title": "Started At Utc",
+      "type": "string"
+    },
+    "finished_at_utc": {
+      "anyOf": [
+        {
+          "format": "date-time",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Finished At Utc"
+    },
+    "hardware": {
+      "$ref": "#/$defs/HardwareInfo"
+    },
+    "software": {
+      "$ref": "#/$defs/SoftwareInfo"
+    },
+    "config_path": {
+      "minLength": 1,
+      "title": "Config Path",
+      "type": "string"
+    },
+    "config_hash": {
+      "anyOf": [
+        {
+          "pattern": "^[0-9a-f]{64}$",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Config Hash"
+    },
+    "status": {
+      "enum": [
+        "pilot",
+        "development",
+        "final"
+      ],
+      "title": "Status",
+      "type": "string"
+    },
+    "outcome": {
+      "default": "running",
+      "enum": [
+        "running",
+        "completed",
+        "failed"
+      ],
+      "title": "Outcome",
+      "type": "string"
+    },
+    "failure_reason": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Failure Reason"
+    }
+  },
+  "required": [
+    "run_id",
+    "git_commit",
+    "algorithm",
+    "problem",
+    "seed",
+    "objective_evaluation_budget",
+    "started_at_utc",
+    "hardware",
+    "software",
+    "config_path",
+    "status"
+  ],
+  "title": "RunMetadata",
+  "type": "object"
+}
