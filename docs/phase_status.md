@@ -9,7 +9,7 @@ commit on top of it, so the branch tip is always that SHA plus the status-file c
 
 | Phase | Branch | Status | Local HEAD | Remote Published | Review |
 |---|---|---|---|---|---|
-| 00 | `phase/00-foundation` | READY FOR REVIEW | `49012a0` | No | Pending |
+| 00 | `phase/00-foundation` | PUBLISHED | `49012a0` | Yes (`5c7f7e1` verified 2026-11-23) | Pending |
 | 01 | `phase/01-core-interfaces` | NOT STARTED | — | No | Pending |
 | 02 | `phase/02-benchmarks` | NOT STARTED | — | No | Pending |
 | 03 | `phase/03-algorithms` | NOT STARTED | — | No | Pending |
@@ -28,4 +28,5 @@ commit on top of it, so the branch tip is always that SHA plus the status-file c
 - **Not run locally:** Python 3.11 (not installed on the dev machine; covered by the CI matrix),
   GitHub Actions (runs on first push), `actionlint`, remote pre-commit hooks.
 - **Open decisions:** P1–P11 in `docs/decisions/0001-foundation-and-protocol-decisions.md`.
+- **Published:** pushed to `origin/phase/00-foundation`; remote SHA `5c7f7e1` matched local HEAD.
 - **Gate:** owner reviews the foundation and protocol before Phase 01 starts.
