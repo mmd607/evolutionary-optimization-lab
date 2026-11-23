@@ -5,21 +5,8 @@ from __future__ import annotations
 import io
 import json
 import logging
-from collections.abc import Iterator
 
-import pytest
-
-from evooptlab.utils.logging import ROOT_LOGGER_NAME, configure_logging, get_logger
-
-
-@pytest.fixture(autouse=True)
-def _reset_logger() -> Iterator[None]:
-    yield
-    logger = logging.getLogger(ROOT_LOGGER_NAME)
-    for handler in list(logger.handlers):
-        logger.removeHandler(handler)
-    logger.setLevel(logging.NOTSET)
-    logger.propagate = True
+from evooptlab.utils.logging import configure_logging, get_logger
 
 
 def test_json_lines_include_extra_fields() -> None:
