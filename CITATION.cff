@@ -1,0 +1,4 @@
+cff-version: 1.2.0
+message: "If you use EvoOptLab, cite the repository version you used."
+title: "EvoOptLab: Evolutionary Optimization and Neural Hyperparameter Search"
+type: software

@@ -1,0 +1,30 @@
+hpo:
+  tasks:
+    - name: breast_cancer_smoke
+      source: scikit-learn
+      task_type: classification
+      role: pipeline_smoke_test_only
+      target_metric: f1_macro
+    - name: wine_quality
+      source: UCI
+      task_type: classification_or_regression
+      role: compact_hpo_task
+      target_metric: define_before_run
+    - name: bank_marketing
+      source: UCI
+      task_type: classification
+      role: compact_hpo_task
+      target_metric: f1_macro
+    - name: california_housing
+      source: scikit-learn
+      task_type: regression
+      role: compact_hpo_task
+      target_metric: neg_root_mean_squared_error
+  split:
+    strategy: task_specific
+    test_fraction: 0.2
+    random_seed: 2026
+  search:
+    max_trials: 100
+    timeout_seconds: 7200
+    # Keep the final test set inaccessible to the optimizer.
