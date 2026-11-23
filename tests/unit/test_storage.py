@@ -195,3 +195,28 @@ class TestArtifactLayout:
     def test_rejects_path_traversal(self, tmp_path: Path) -> None:
         with pytest.raises(ValueError):
             ArtifactLayout(tmp_path).run_dir("pilot", "../outside")
+
+
+class TestRunFiles:
+    def test_write_run_text_is_exclusive(self, tmp_path: Path) -> None:
+        layout = ArtifactLayout(tmp_path)
+        run_id = _metadata().run_id
+        layout.create_run_dir("pilot", run_id)
+        path = layout.write_run_text("pilot", run_id, "metrics", '{"a": 1}\n')
+        assert path.read_text(encoding="utf-8") == '{"a": 1}\n'
+        with pytest.raises(FileExistsError):
+            layout.write_run_text("pilot", run_id, "metrics", "{}")
+        assert path.read_text(encoding="utf-8") == '{"a": 1}\n'
+
+    def test_log_kind_lands_in_logs_dir(self, tmp_path: Path) -> None:
+        layout = ArtifactLayout(tmp_path)
+        run_id = _metadata().run_id
+        layout.create_run_dir("pilot", run_id)
+        assert layout.write_run_text("pilot", run_id, "log", "").parent.name == "logs"
+
+    def test_metadata_must_use_dedicated_writer(self, tmp_path: Path) -> None:
+        layout = ArtifactLayout(tmp_path)
+        run_id = _metadata().run_id
+        layout.create_run_dir("pilot", run_id)
+        with pytest.raises(ValueError, match="write_metadata"):
+            layout.write_run_text("pilot", run_id, "metadata", "{}")
