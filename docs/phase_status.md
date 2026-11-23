@@ -10,7 +10,7 @@ commit on top of it, so the branch tip is always that SHA plus the status-file c
 | Phase | Branch | Status | Local HEAD | Remote Published | Review |
 |---|---|---|---|---|---|
 | 00 | `phase/00-foundation` | PUBLISHED | `49012a0` | Yes (`5c7f7e1` verified 2026-11-23; merged to `main` via PR #1) | Approved |
-| 01 | `phase/01-core-interfaces` | READY FOR REVIEW | `ff455aa` | No | Pending |
+| 01 | `phase/01-core-interfaces` | PUBLISHED | `ff455aa` | Yes (`f365ef3` verified 2026-11-23) | Pending |
 | 02 | `phase/02-benchmarks` | NOT STARTED | — | No | Pending |
 | 03 | `phase/03-algorithms` | NOT STARTED | — | No | Pending |
 | 04 | `phase/04-experiments` | NOT STARTED | — | No | Pending |
@@ -42,4 +42,5 @@ commit on top of it, so the branch tip is always that SHA plus the status-file c
   validation PASS.
 - **Not run locally:** Python 3.11 (CI matrix), GitHub Actions (runs on push).
 - **Still open:** P6 seed policy (both mechanisms implemented); checkpoint writing; parallel runs.
+- **Published:** pushed to `origin/phase/01-core-interfaces`; remote SHA `f365ef3` matched local HEAD.
 - **Gate:** owner reviews interfaces before Phase 02 starts.
