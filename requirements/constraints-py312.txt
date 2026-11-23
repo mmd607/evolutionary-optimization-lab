@@ -14,6 +14,7 @@ librt==0.17.0
 mypy==2.4.1
 mypy_extensions==1.2.0
 nodeenv==1.12.0
+numpy==2.4.6
 packaging==26.3
 pathspec==1.1.1
 platformdirs==4.14.8

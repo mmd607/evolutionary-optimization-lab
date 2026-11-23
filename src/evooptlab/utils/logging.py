@@ -82,8 +82,10 @@ def configure_logging(
         logger.removeHandler(handler)
     handler = logging.StreamHandler(stream if stream is not None else sys.stderr)
     handler.setFormatter(JsonFormatter() if fmt == "json" else TextFormatter())
+    resolved = level.upper() if isinstance(level, str) else level
+    handler.setLevel(resolved)
     logger.addHandler(handler)
-    logger.setLevel(level.upper() if isinstance(level, str) else level)
+    logger.setLevel(resolved)
     logger.propagate = False
     return logger
 

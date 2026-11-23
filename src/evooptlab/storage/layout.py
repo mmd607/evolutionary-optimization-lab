@@ -139,6 +139,18 @@ class ArtifactLayout:
         _write_new_json(path, metadata)
         return path
 
+    def write_run_text(self, stage: RunStage, run_id: str, kind: str, text: str) -> Path:
+        """Write a run artifact (config, metrics, history) exclusively; never overwrites.
+
+        ``run_metadata.json`` must be written with :meth:`write_metadata` instead.
+        """
+        if kind == "metadata":
+            raise ValueError("use write_metadata for run_metadata.json")
+        path = self.run_file(stage, run_id, kind)
+        with path.open("x", encoding="utf-8", newline="\n") as handle:
+            handle.write(text)
+        return path
+
     def read_metadata(self, stage: RunStage, run_id: str) -> RunMetadata:
         path = self.run_file(stage, run_id, "metadata")
         return RunMetadata.model_validate_json(path.read_text(encoding="utf-8"))

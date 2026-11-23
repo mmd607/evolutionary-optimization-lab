@@ -19,6 +19,7 @@ classifiers = [
     "Typing :: Typed",
 ]
 dependencies = [
+    "numpy>=1.26,<3",  # tested pin in requirements/ (2.4.x supports 3.11 and 3.12)
     "pydantic>=2.7,<3",
     "PyYAML>=6.0,<7",
 ]
@@ -93,6 +94,7 @@ warn_required_dynamic_aliases = true
 [tool.pytest.ini_options]
 minversion = "8.0"
 testpaths = ["tests"]
+pythonpath = ["tests"]
 addopts = ["-ra", "--strict-markers", "--strict-config", "--import-mode=importlib"]
 markers = [
     "integration: multi-component tests (still small and offline)",
