@@ -1,0 +1,114 @@
+[build-system]
+requires = ["hatchling>=1.25"]
+build-backend = "hatchling.build"
+
+[project]
+name = "evooptlab"
+version = "0.0.1"
+description = "Reproducible, budget-aware evaluation of evolutionary and model-based optimization."
+readme = "README.md"
+requires-python = ">=3.11,<3.13"
+# License intentionally unset: pending a decision by the repository owner
+# (see docs/decisions/0001-foundation-and-protocol-decisions.md).
+authors = [{ name = "mohammad homaiyan" }]
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Scientific/Engineering",
+    "Typing :: Typed",
+]
+dependencies = [
+    "pydantic>=2.7,<3",
+    "PyYAML>=6.0,<7",
+]
+
+[project.scripts]
+evooptlab = "evooptlab.cli:main"
+
+[dependency-groups]
+test = [
+    "pytest>=8.2",
+    "pytest-cov>=5.0",
+]
+lint = [
+    "ruff>=0.6",
+    "mypy>=1.11",
+    "types-PyYAML>=6.0",
+]
+dev = [
+    { include-group = "test" },
+    { include-group = "lint" },
+    "pre-commit>=3.7",
+]
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/evooptlab"]
+
+# --------------------------------------------------------------------------
+# Ruff
+# --------------------------------------------------------------------------
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+src = ["src", "tests"]
+extend-exclude = ["notebooks"]
+
+[tool.ruff.lint]
+select = [
+    "E", "W",   # pycodestyle
+    "F",        # pyflakes
+    "I",        # isort
+    "B",        # bugbear
+    "UP",       # pyupgrade
+    "SIM",      # simplify
+    "N",        # pep8-naming
+    "RUF",      # ruff-specific
+    "PTH",      # use pathlib
+    "NPY",      # numpy-specific
+]
+
+[tool.ruff.format]
+quote-style = "double"
+line-ending = "lf"
+
+# --------------------------------------------------------------------------
+# MyPy
+# --------------------------------------------------------------------------
+[tool.mypy]
+python_version = "3.11"
+strict = true
+warn_unreachable = true
+plugins = ["pydantic.mypy"]
+files = ["src", "tests"]
+
+[tool.pydantic-mypy]
+init_forbid_extra = true
+init_typed = true
+warn_required_dynamic_aliases = true
+
+# --------------------------------------------------------------------------
+# Pytest / coverage
+# --------------------------------------------------------------------------
+[tool.pytest.ini_options]
+minversion = "8.0"
+testpaths = ["tests"]
+addopts = ["-ra", "--strict-markers", "--strict-config", "--import-mode=importlib"]
+markers = [
+    "integration: multi-component tests (still small and offline)",
+    "slow: tests that take more than a few seconds",
+]
+filterwarnings = ["error"]
+
+[tool.coverage.run]
+source = ["evooptlab"]
+branch = true
+
+[tool.coverage.report]
+show_missing = true
+skip_covered = false
+fail_under = 85
+exclude_also = [
+    "if TYPE_CHECKING:",
+    "raise NotImplementedError",
+]
