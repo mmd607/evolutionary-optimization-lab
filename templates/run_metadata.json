@@ -1,0 +1,22 @@
+{
+  "run_id": "unique-run-id",
+  "project": "EvoOptLab",
+  "git_commit": "commit-sha",
+  "algorithm": "algorithm-name",
+  "problem": "problem-name",
+  "seed": 11,
+  "objective_evaluation_budget": 10000,
+  "started_at_utc": "ISO-8601",
+  "finished_at_utc": "ISO-8601",
+  "hardware": {
+    "cpu": "record-model",
+    "gpu": null,
+    "ram_gb": null
+  },
+  "software": {
+    "python": "version",
+    "packages_lock_hash": "hash"
+  },
+  "config_path": "config.yaml",
+  "status": "pilot_or_final"
+}
