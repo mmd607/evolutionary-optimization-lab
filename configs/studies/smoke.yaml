@@ -1,0 +1,19 @@
+# Pipeline smoke test: tiny matrix that exercises plan -> run -> diagnose -> aggregate end-to-end.
+# Framework check only, NOT a result. Runs in well under a minute.
+study:
+  name: smoke
+  stage: pilot
+  output_dir: artifacts/experiments
+  problems:
+    - {name: ZDT1, objectives: 2, variables: 30}
+    - {name: DTLZ2, objectives: 3, variables: 12}
+  algorithms:
+    - {name: random_search}
+    - {name: nsga2}
+  budget:
+    unit: objective_evaluations
+    max_evaluations: 500
+  seeds:
+    policy: explicit
+    values: [11, 23]
+  timeout_seconds: 600

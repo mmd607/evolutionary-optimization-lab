@@ -1,0 +1,28 @@
+# Pilot of the core multi-objective benchmark study (PRELIMINARY; never pooled with final runs).
+#
+# Mirrors configs/benchmarks.yaml (problems, 10 000-evaluation budget, explicit pilot seeds) and
+# the algorithm list in configs/experiments.yaml, with the DE/PSO placeholders replaced by the
+# variants *proposed* in ADR 0004 (gde3, cmopso). P5, P6, P7 and P10 are still open; a final
+# study config is written and frozen only after they are decided.
+study:
+  name: pilot_core
+  stage: pilot
+  output_dir: artifacts/experiments
+  problems:
+    - {name: ZDT1, objectives: 2, variables: 30}
+    - {name: ZDT2, objectives: 2, variables: 30}
+    - {name: ZDT3, objectives: 2, variables: 30}
+    - {name: DTLZ2, objectives: 3, variables: 12}
+    - {name: DTLZ7, objectives: 3, variables: 22}
+  algorithms:
+    - {name: random_search}
+    - {name: nsga2}
+    - {name: gde3}
+    - {name: cmopso}
+  budget:
+    unit: objective_evaluations
+    max_evaluations: 10000
+  seeds:
+    policy: explicit
+    values: [11, 23, 37, 41, 59]
+  timeout_seconds: 3600
