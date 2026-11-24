@@ -134,18 +134,30 @@ def _hv(f: FloatArray, r: FloatArray) -> float:
     if m == 1:
         return float(r[0] - f[:, 0].min())
     if m == 2:
-        f = f[np.lexsort((f[:, 1], f[:, 0]))]
-        volume, prev = 0.0, r[1]
-        for x, y in f:
-            if y < prev:
-                volume += (r[0] - x) * (prev - y)
-                prev = y
-        return volume
+        return _hv2d(f, r)
     f = f[np.argsort(f[:, -1], kind="stable")]
     volume = 0.0
     for i in range(f.shape[0]):
         upper = f[i + 1, -1] if i + 1 < f.shape[0] else r[-1]
         depth = upper - f[i, -1]
         if depth > 0.0:
-            volume += depth * _hv(non_dominated(f[: i + 1, :-1]), r[:-1])
+            # The 2-D staircase handles dominated points itself, so 3-D slices skip the
+            # quadratic non-dominated filter (O(n^2 log n) overall instead of O(n^3)).
+            prefix = f[: i + 1, :-1]
+            volume += depth * (
+                _hv2d(prefix, r[:-1]) if m == 3 else _hv(non_dominated(prefix), r[:-1])
+            )
     return volume
+
+
+def _hv2d(f: FloatArray, r: FloatArray) -> float:
+    """Exact 2-D hypervolume of any point set inside the reference box (dominated points allowed).
+
+    Sort by (f0, f1); a point adds area only where its f1 is below the running minimum of the
+    points before it. Vectorized form of the classic staircase sweep.
+    """
+    f = f[np.lexsort((f[:, 1], f[:, 0]))]
+    best = np.minimum.accumulate(f[:, 1])
+    previous = np.concatenate(([r[1]], best[:-1]))
+    gain = np.clip(previous - f[:, 1], 0.0, None)
+    return float(np.sum((r[0] - f[:, 0]) * gain))

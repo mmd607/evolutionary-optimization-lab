@@ -129,6 +129,52 @@ def test_hypervolume_matches_pymoo(m: int) -> None:
     assert metrics.hypervolume(a, ref) == pytest.approx(hv_mod.HV(ref_point=ref)(a), rel=1e-10)
 
 
+def _reference_hv(f: Any, r: Any) -> float:
+    """Slow, obviously-correct slicing HV (the pre-Phase-04 algorithm), used as an oracle."""
+    from evooptlab.evaluation.dominance import non_dominated
+
+    f = non_dominated(f)
+    if f.shape[1] == 2:
+        f = f[np.lexsort((f[:, 1], f[:, 0]))]
+        volume, prev = 0.0, r[1]
+        for x, y in f:
+            if y < prev:
+                volume += (r[0] - x) * (prev - y)
+                prev = y
+        return float(volume)
+    f = f[np.argsort(f[:, -1], kind="stable")]
+    volume = 0.0
+    for i in range(f.shape[0]):
+        upper = f[i + 1, -1] if i + 1 < f.shape[0] else r[-1]
+        volume += (upper - f[i, -1]) * _reference_hv(f[: i + 1, :-1], r[:-1])
+    return float(volume)
+
+
+@pytest.mark.parametrize("seed", range(6))
+@pytest.mark.parametrize("m", [2, 3])
+def test_fast_hypervolume_equals_slicing_oracle_with_dominated_points_and_ties(
+    m: int, seed: int
+) -> None:
+    rng = np.random.default_rng(100 + seed)
+    # Rounded coordinates create ties; uniform cloud contains many dominated points.
+    f = np.round(rng.uniform(0, 1, size=(150, m)), 2)
+    ref = np.full(m, 1.1)
+    assert metrics.hypervolume(f, ref) == pytest.approx(_reference_hv(f, ref), rel=1e-12)
+
+
+def test_three_objective_hypervolume_is_fast_on_large_fronts() -> None:
+    """Pilot regression: ~2 000-point 3-D fronts took minutes with the O(n^3) slicing."""
+    import time
+
+    hv_mod = pytest.importorskip("pymoo.indicators.hv")
+    front = DTLZ2(3, 12).pareto_front(n_partitions=60)  # 1 891 mutually non-dominated points
+    ref = np.full(3, 1.1)
+    start = time.perf_counter()
+    ours = metrics.hypervolume(front, ref)
+    assert time.perf_counter() - start < 20.0
+    assert ours == pytest.approx(hv_mod.HV(ref_point=ref)(front), rel=1e-10)
+
+
 @pytest.mark.parametrize("m", [2, 3])
 @pytest.mark.parametrize(
     ("ours", "module", "cls"),
