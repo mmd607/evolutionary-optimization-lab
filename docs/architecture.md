@@ -90,10 +90,29 @@ Names are proposed; adjust consistently after architecture review.
 | Algorithm | `core/algorithm.py` | `parameters()`, `initialize(spec, rng)`, `ask(max_candidates)`, `tell(result)`, `state_dict()`, `load_state_dict()`, `supports(spec)` |
 | Evaluator | `core/evaluator.py` | `Evaluator(problem, budget).evaluate(X) -> EvaluationResult`; `n_evaluations`, `n_failed_evaluations`, `remaining`, `evaluation_seconds` |
 | ExperimentRunner | `core/experiment.py` | `ExperimentRunner(layout).run(problem, algorithm, RunSpec(stage, seed, budget, timeout_seconds))` |
-| ExperimentConfig | `config/schemas.py` | Validated YAML schemas. Mapping configs to `RunSpec`s is Phase 04 scope. |
+| ExperimentConfig | `config/schemas.py` | Validated YAML schemas. Study configs map to `RunSpec`s in `experiments/` (Phase 04). |
 | Seeds | `core/seeding.py` | `derive_seed`, `derive_run_seeds`, `make_rng` |
 | Artifacts | `storage/` | `ArtifactLayout`, `RunMetadata`, run IDs per protocol §8 |
 | Synthetic test problems | `benchmarks/synthetic.py` | `Sphere`, `TwoSpheres`, `ConstrainedSphere` (framework tests only) |
 
 Deviation from the module list above: `config/` (Phase 00) holds the validated `ExperimentConfig`.
 `core/experiment.py` defines `RunSpec` for a single run.
+
+## Experiment matrices (Phase 04)
+
+*Added 2026-11-25. Decisions and fairness checks are recorded in
+`docs/decisions/0005-experiment-runner-and-fairness-checks.md`.*
+
+| Concept | Module | Key API |
+|---|---|---|
+| Study config | `config/schemas.py` | `StudyConfig`: problems × algorithms (+ parameters) × seeds (`explicit` / `derived`) at one budget and stage; files in `configs/studies/` |
+| Matrix | `experiments/matrix.py` | `build_matrix(study) -> [RunCell]` (validated, paired seeds, interleaved order), `cell_config_hash` |
+| Study runner | `experiments/study.py` | `run_study(study, layout, resume=...)`: one `ExperimentRunner.run` per unsettled cell; never overwrites |
+| Stored runs | `experiments/records.py` | `scan_stage(layout, stage)`: read-only view of a stage's run directories |
+| Diagnostics | `experiments/diagnostics.py` | `collect_study`, `diagnose -> DiagnosticsReport` (PASS / WARN / FAIL checks, timing), `projected_seconds` |
+| Aggregation | `experiments/aggregate.py` | `write_aggregate`: `runs.csv`, `summary.csv`, `manifest.json` in a new directory |
+| CLI | `cli.py` | `evooptlab plan / run [--resume] / diagnose / aggregate STUDY [--root DIR]` |
+
+Data flow: `StudyConfig -> build_matrix -> run_study -> artifacts/experiments/<stage>/<run_id>/`
+`-> collect_study -> diagnose -> write_aggregate -> artifacts/experiments/aggregates/<stage>/...`.
+Analysis reads only stored artifacts, never in-memory run state.
