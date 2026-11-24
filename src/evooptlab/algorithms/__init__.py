@@ -7,10 +7,13 @@ from __future__ import annotations
 
 from typing import Any
 
+from evooptlab.algorithms.baselines import CMOPSO, DE, GA, GDE3, NSGA2, PSO
 from evooptlab.algorithms.random_search import RandomSearch
 from evooptlab.core.algorithm import Algorithm
 
-ALGORITHMS: dict[str, type[Algorithm]] = {cls.name: cls for cls in (RandomSearch,)}
+ALGORITHMS: dict[str, type[Algorithm]] = {
+    cls.name: cls for cls in (RandomSearch, GA, DE, PSO, NSGA2, GDE3, CMOPSO)
+}
 
 
 def get_algorithm(name: str, **hyperparameters: Any) -> Algorithm:
@@ -22,4 +25,14 @@ def get_algorithm(name: str, **hyperparameters: Any) -> Algorithm:
     return cls(**hyperparameters)
 
 
-__all__ = ["ALGORITHMS", "RandomSearch", "get_algorithm"]
+__all__ = [
+    "ALGORITHMS",
+    "CMOPSO",
+    "DE",
+    "GA",
+    "GDE3",
+    "NSGA2",
+    "PSO",
+    "RandomSearch",
+    "get_algorithm",
+]
