@@ -12,7 +12,7 @@ commit on top of it, so the branch tip is always that SHA plus the status-file c
 | 00 | `phase/00-foundation` | PUBLISHED | `49012a0` | Yes (`5c7f7e1` verified 2026-11-23; merged to `main` via PR #1) | Approved |
 | 01 | `phase/01-core-interfaces` | PUBLISHED | `ff455aa` | Yes (`f365ef3` verified 2026-11-23; merged to `main` via PR #2) | Approved |
 | 02 | `phase/02-benchmarks` | PUBLISHED | `1ce9e6b` | Yes (`ae172f6` verified 2026-11-24) | Pending |
-| 03 | `phase/03-algorithms` | READY FOR REVIEW | `ec9ea8a` | No | Pending |
+| 03 | `phase/03-algorithms` | PUBLISHED | `40dcf42` | Yes (`40dcf42` verified 2026-11-25) | Pending |
 | 04 | `phase/04-experiments` | NOT STARTED | — | No | Pending |
 | 05 | `phase/05-hyperparameter-optimization` | NOT STARTED | — | No | Pending |
 | 06 | `phase/06-analysis-and-paper` | NOT STARTED | — | No | Pending |
@@ -76,4 +76,5 @@ commit on top of it, so the branch tip is always that SHA plus the status-file c
 - **Not run locally:** Python 3.11 (CI matrix).
 - **Needs owner decision:** P7 (GDE3 + CMOPSO proposed), P10 (defaults without tuning proposed),
   population-size policy; P8 still pending from Phase 02.
+- **Published:** pushed to `origin/phase/03-algorithms`; remote SHA `40dcf42` matched local HEAD.
 - **Gate:** owner reviews algorithms before Phase 04 starts.
