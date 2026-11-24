@@ -80,7 +80,8 @@ class RunResult:
         return self.metadata.outcome
 
 
-def _canonical_hash(document: Mapping[str, Any]) -> str:
+def canonical_hash(document: Mapping[str, Any]) -> str:
+    """SHA-256 of a config document as canonical JSON; stored as ``config_hash`` in metadata."""
     text = json.dumps(document, sort_keys=True, separators=(",", ":"))
     return hashlib.sha256(text.encode("utf-8")).hexdigest()
 
@@ -136,7 +137,7 @@ class ExperimentRunner:
         run_id = make_run_id(problem.name, algorithm.name, spec.budget, spec.seed, when=started)
         self.layout.create_run_dir(spec.stage, run_id)
 
-        config = self._config_document(problem, algorithm, spec)
+        config = self.config_document(problem, algorithm, spec)
         self.layout.write_run_text(
             spec.stage, run_id, "config", yaml.safe_dump(config, sort_keys=True)
         )
@@ -247,7 +248,12 @@ class ExperimentRunner:
         )
 
     @staticmethod
-    def _config_document(problem: Problem, algorithm: Algorithm, spec: RunSpec) -> dict[str, Any]:
+    def config_document(problem: Problem, algorithm: Algorithm, spec: RunSpec) -> dict[str, Any]:
+        """The ``config.yaml`` document of a run; its :func:`canonical_hash` identifies the run.
+
+        Two runs with the same document are replicates of the same planned cell, which is what
+        study resume uses to decide whether a cell has already been run.
+        """
         p = problem.spec
         return {
             "stage": spec.stage,
@@ -293,6 +299,6 @@ class ExperimentRunner:
                 packages=env.packages,
             ),
             config_path="config.yaml",
-            config_hash=_canonical_hash(config),
+            config_hash=canonical_hash(config),
             status=spec.stage,
         )
