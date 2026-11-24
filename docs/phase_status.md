@@ -10,8 +10,8 @@ commit on top of it, so the branch tip is always that SHA plus the status-file c
 | Phase | Branch | Status | Local HEAD | Remote Published | Review |
 |---|---|---|---|---|---|
 | 00 | `phase/00-foundation` | PUBLISHED | `49012a0` | Yes (`5c7f7e1` verified 2026-11-23; merged to `main` via PR #1) | Approved |
-| 01 | `phase/01-core-interfaces` | PUBLISHED | `ff455aa` | Yes (`f365ef3` verified 2026-11-23) | Pending |
-| 02 | `phase/02-benchmarks` | NOT STARTED | — | No | Pending |
+| 01 | `phase/01-core-interfaces` | PUBLISHED | `ff455aa` | Yes (`f365ef3` verified 2026-11-23; merged to `main` via PR #2) | Approved |
+| 02 | `phase/02-benchmarks` | PUBLISHED | `1ce9e6b` | Yes (`ae172f6` verified 2026-11-24) | Pending |
 | 03 | `phase/03-algorithms` | NOT STARTED | — | No | Pending |
 | 04 | `phase/04-experiments` | NOT STARTED | — | No | Pending |
 | 05 | `phase/05-hyperparameter-optimization` | NOT STARTED | — | No | Pending |
@@ -44,3 +44,20 @@ commit on top of it, so the branch tip is always that SHA plus the status-file c
 - **Still open:** P6 seed policy (both mechanisms implemented); checkpoint writing; parallel runs.
 - **Published:** pushed to `origin/phase/01-core-interfaces`; remote SHA `f365ef3` matched local HEAD.
 - **Gate:** owner reviews interfaces before Phase 02 starts.
+
+## Phase 02 — Benchmarks and metrics
+
+- **Base branch:** `origin/main` @ `76a54f0` (merge of PR #2)
+- **Delivered:** ZDT1-3, DTLZ2, DTLZ7 with analytical reference fronts and provenance metadata;
+  config-driven suite registry; Pareto dominance utilities; exact HV, GD, GD+, IGD, IGD+, spacing,
+  feasibility rate; proposed normalization / HV reference-point policy (`proposed-v1`).
+  Docs: `docs/benchmark_problems.md`, `docs/decisions/0003-metrics-normalization-and-reference-points.md`.
+- **References:** analytical fronts and limits, inclusion-exclusion, and pymoo 0.6.2 (test-only).
+- **Validation (local, Windows, Python 3.12.3, clean venv):** Ruff lint PASS · Ruff format PASS ·
+  MyPy strict PASS (47 files) · Pytest PASS (261 tests, 0 skipped, 99.05 % branch coverage) ·
+  config validation PASS.
+- **Not run locally:** Python 3.11 (CI matrix; dependency pins chosen from pip's 3.11 resolution).
+- **Needs owner decision:** P8 policy in ADR 0003 (incl. the 1.1 reference offset, pending
+  literature check); source citations are recorded unverified.
+- **Published:** pushed to `origin/phase/02-benchmarks`; remote SHA `ae172f6` matched local HEAD.
+- **Gate:** owner reviews benchmarks and metric policy before Phase 03 starts.
