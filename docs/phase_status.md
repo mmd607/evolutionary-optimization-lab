@@ -11,7 +11,7 @@ commit on top of it, so the branch tip is always that SHA plus the status-file c
 |---|---|---|---|---|---|
 | 00 | `phase/00-foundation` | PUBLISHED | `49012a0` | Yes (`5c7f7e1` verified 2026-11-23; merged to `main` via PR #1) | Approved |
 | 01 | `phase/01-core-interfaces` | PUBLISHED | `ff455aa` | Yes (`f365ef3` verified 2026-11-23; merged to `main` via PR #2) | Approved |
-| 02 | `phase/02-benchmarks` | READY FOR REVIEW | `1ce9e6b` | No | Pending |
+| 02 | `phase/02-benchmarks` | PUBLISHED | `1ce9e6b` | Yes (`ae172f6` verified 2026-11-24) | Pending |
 | 03 | `phase/03-algorithms` | NOT STARTED | — | No | Pending |
 | 04 | `phase/04-experiments` | NOT STARTED | — | No | Pending |
 | 05 | `phase/05-hyperparameter-optimization` | NOT STARTED | — | No | Pending |
@@ -59,4 +59,5 @@ commit on top of it, so the branch tip is always that SHA plus the status-file c
 - **Not run locally:** Python 3.11 (CI matrix; dependency pins chosen from pip's 3.11 resolution).
 - **Needs owner decision:** P8 policy in ADR 0003 (incl. the 1.1 reference offset, pending
   literature check); source citations are recorded unverified.
+- **Published:** pushed to `origin/phase/02-benchmarks`; remote SHA `ae172f6` matched local HEAD.
 - **Gate:** owner reviews benchmarks and metric policy before Phase 03 starts.
