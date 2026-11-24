@@ -22,6 +22,9 @@ dependencies = [
     "numpy>=1.26,<3",  # tested pin in requirements/ (2.4.x supports 3.11 and 3.12)
     "pydantic>=2.7,<3",
     "PyYAML>=6.0,<7",
+    # Algorithm baselines (adapters) and independent reference for benchmark/metric tests.
+    # Exact pin: adapters depend on 0.6.2 internals (see docs/decisions/0004-*).
+    "pymoo==0.6.2",
 ]
 
 [project.scripts]
@@ -31,8 +34,6 @@ evooptlab = "evooptlab.cli:main"
 test = [
     "pytest>=8.2",
     "pytest-cov>=5.0",
-    # Independent reference implementation for benchmark and metric cross-checks (tests only).
-    "pymoo==0.6.2",
 ]
 lint = [
     "ruff>=0.6",
