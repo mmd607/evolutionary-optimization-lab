@@ -3,7 +3,7 @@
 PYTHON ?= python
 CONSTRAINTS := requirements/constraints-py312.txt
 
-.PHONY: help install lint format format-check typecheck test coverage validate-configs schema check lock
+.PHONY: help install lint format format-check typecheck test coverage validate-configs smoke schema check lock
 
 help:
 	@echo "install          install package + dev tools with pinned constraints"
@@ -13,7 +13,8 @@ help:
 	@echo "typecheck        mypy (strict)"
 	@echo "test             pytest"
 	@echo "coverage         pytest with coverage report"
-	@echo "validate-configs validate configs/*.yaml"
+	@echo "validate-configs validate configs/*.yaml and configs/studies/*.yaml"
+	@echo "smoke            run the smoke study end-to-end into build/smoke (gitignored)"
 	@echo "schema           regenerate docs/schemas/run_metadata.schema.json"
 	@echo "check            lint + format-check + typecheck + coverage + validate-configs"
 	@echo "lock             regenerate $(CONSTRAINTS) from the current environment"
@@ -41,7 +42,13 @@ coverage:
 	$(PYTHON) -m pytest --cov --cov-report=term-missing
 
 validate-configs:
-	$(PYTHON) -m evooptlab validate-config configs/*.yaml
+	$(PYTHON) -m evooptlab validate-config configs/*.yaml configs/studies/*.yaml
+
+smoke:
+	$(PYTHON) -m evooptlab plan configs/studies/smoke.yaml
+	$(PYTHON) -m evooptlab run configs/studies/smoke.yaml --root build/smoke --resume
+	$(PYTHON) -m evooptlab diagnose configs/studies/smoke.yaml --root build/smoke
+	$(PYTHON) -m evooptlab aggregate configs/studies/smoke.yaml --root build/smoke
 
 schema:
 	$(PYTHON) -m evooptlab schema run-metadata > docs/schemas/run_metadata.schema.json

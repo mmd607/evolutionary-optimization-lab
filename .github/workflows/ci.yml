@@ -56,4 +56,14 @@ jobs:
 
       - name: Validate configs
         shell: bash
-        run: python -m evooptlab validate-config configs/*.yaml
+        run: python -m evooptlab validate-config configs/*.yaml configs/studies/*.yaml
+
+      - name: Smoke study end-to-end
+        shell: bash
+        run: |
+          root="$RUNNER_TEMP/evooptlab-smoke"
+          python -m evooptlab plan configs/studies/smoke.yaml
+          python -m evooptlab run configs/studies/smoke.yaml --root "$root"
+          python -m evooptlab run configs/studies/smoke.yaml --root "$root" --resume
+          python -m evooptlab diagnose configs/studies/smoke.yaml --root "$root"
+          python -m evooptlab aggregate configs/studies/smoke.yaml --root "$root"
