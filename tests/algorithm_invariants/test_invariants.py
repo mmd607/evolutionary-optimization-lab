@@ -73,10 +73,15 @@ class TestRunInvariants:
         self, runner: ExperimentRunner, name: str, kind: str
     ) -> None:
         problem = _problem(kind)
-        rows = _history(_run(runner, name, problem))
+        algorithm = get_algorithm(name)
+        result = runner.run(problem, algorithm, RunSpec("pilot", seed=1, budget=BUDGET))
+        rows = _history(result)
         x = np.array([[float(r[f"x_{i}"]) for i in range(problem.spec.n_variables)] for r in rows])
         assert np.all(x >= problem.spec.lower_bounds)
         assert np.all(x <= problem.spec.upper_bounds)
+        if isinstance(algorithm, PymooAdapter):
+            # ADR 0004: pymoo's own operators keep candidates in bounds; no clipping was needed.
+            assert algorithm.n_repaired == 0
 
     def test_deterministic_and_independent_of_global_rng(
         self, runner: ExperimentRunner, name: str, kind: str
