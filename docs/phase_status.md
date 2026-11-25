@@ -13,7 +13,7 @@ commit on top of it, so the branch tip is always that SHA plus the status-file c
 | 01 | `phase/01-core-interfaces` | PUBLISHED | `ff455aa` | Yes (`f365ef3` verified 2026-11-23; merged to `main` via PR #2) | Approved |
 | 02 | `phase/02-benchmarks` | PUBLISHED | `1ce9e6b` | Yes (`ae172f6` verified 2026-11-24) | Pending |
 | 03 | `phase/03-algorithms` | PUBLISHED | `40dcf42` | Yes (`40dcf42` verified 2026-11-25) | Pending |
-| 04 | `phase/04-experiments` | READY FOR REVIEW | `76afce4` | No | Pending |
+| 04 | `phase/04-experiments` | PUBLISHED | `76afce4` | Yes (`14cdd7d` verified 2026-11-25) | Pending |
 | 05 | `phase/05-hyperparameter-optimization` | NOT STARTED | — | No | Pending |
 | 06 | `phase/06-analysis-and-paper` | NOT STARTED | — | No | Pending |
 | 07 | `phase/07-dashboard` | NOT STARTED | — | No | Pending |
@@ -82,6 +82,7 @@ commit on top of it, so the branch tip is always that SHA plus the status-file c
 ## Phase 04 — Experiments
 
 - **Base branch:** `origin/phase/03-algorithms` @ `f7c8fdf` (Phase 03 was not yet merged to `main`)
+- **Published:** `origin/phase/04-experiments` @ `14cdd7d` (remote SHA verified 2026-11-25)
 - **Delivered:** study configs (`configs/studies/`, schema `study`), matrix expansion with
   pre-run validation, paired seeds and interleaved order, a study runner with safe resume
   (config-hash matching, failures are not retried, interrupted runs are rerun under new IDs), a
