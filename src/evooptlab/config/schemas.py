@@ -175,7 +175,85 @@ class HPOTasksFile(_StrictModel):
     hpo: HPOConfig
 
 
-AnyConfig: TypeAlias = BenchmarksFile | ExperimentsFile | HPOTasksFile
+# ---------------------------------------------------------------------------
+# configs/studies/*.yaml
+# ---------------------------------------------------------------------------
+StudyStage: TypeAlias = Literal["pilot", "development", "final"]
+ParameterValue: TypeAlias = bool | int | float | str | None
+
+
+class ExplicitSeeds(_StrictModel):
+    """Seed policy *explicit*: every replicate's run seed is listed (ADR 0001, P6)."""
+
+    policy: Literal["explicit"]
+    values: Annotated[list[NonNegativeInt], Field(min_length=1)]
+
+    @field_validator("values")
+    @classmethod
+    def _seeds_unique(cls, values: list[int]) -> list[int]:
+        if len(set(values)) != len(values):
+            raise ValueError("seeds must be unique; duplicated seeds silently reduce n")
+        return values
+
+
+class DerivedSeeds(_StrictModel):
+    """Seed policy *derived*: run seeds come from ``master_seed`` per problem (ADR 0001, P6)."""
+
+    policy: Literal["derived"]
+    master_seed: NonNegativeInt
+    n_replicates: PositiveInt
+
+
+SeedPolicy: TypeAlias = Annotated[ExplicitSeeds | DerivedSeeds, Field(discriminator="policy")]
+
+
+class StudyAlgorithmConfig(_StrictModel):
+    """A registered algorithm and its explicit hyperparameter overrides (empty = defaults)."""
+
+    name: Identifier
+    parameters: dict[str, ParameterValue] = Field(default_factory=dict)
+
+
+class StudyConfig(_StrictModel):
+    """A full experiment matrix: problems x algorithms x seeds at one budget and stage."""
+
+    name: Identifier
+    stage: StudyStage
+    output_dir: Annotated[str, Field(min_length=1)]
+    problems: Annotated[list[BenchmarkProblemConfig], Field(min_length=1)]
+    algorithms: Annotated[list[StudyAlgorithmConfig], Field(min_length=1)]
+    budget: BudgetConfig
+    seeds: SeedPolicy
+    timeout_seconds: PositiveInt | None = None
+
+    @field_validator("problems")
+    @classmethod
+    def _problem_names_unique(
+        cls, problems: list[BenchmarkProblemConfig]
+    ) -> list[BenchmarkProblemConfig]:
+        names = [p.name for p in problems]
+        if len(set(names)) != len(names):
+            raise ValueError("study problem names must be unique")
+        return problems
+
+    @field_validator("algorithms")
+    @classmethod
+    def _algorithm_names_unique(
+        cls, algorithms: list[StudyAlgorithmConfig]
+    ) -> list[StudyAlgorithmConfig]:
+        names = [a.name for a in algorithms]
+        if len(set(names)) != len(names):
+            raise ValueError("study algorithm names must be unique")
+        return algorithms
+
+
+class StudyFile(_StrictModel):
+    """Top-level structure of ``configs/studies/*.yaml``."""
+
+    study: StudyConfig
+
+
+AnyConfig: TypeAlias = BenchmarksFile | ExperimentsFile | HPOTasksFile | StudyFile
 
 
 # ---------------------------------------------------------------------------

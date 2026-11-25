@@ -13,7 +13,7 @@ commit on top of it, so the branch tip is always that SHA plus the status-file c
 | 01 | `phase/01-core-interfaces` | PUBLISHED | `ff455aa` | Yes (`f365ef3` verified 2026-11-23; merged to `main` via PR #2) | Approved |
 | 02 | `phase/02-benchmarks` | PUBLISHED | `1ce9e6b` | Yes (`ae172f6` verified 2026-11-24) | Pending |
 | 03 | `phase/03-algorithms` | PUBLISHED | `40dcf42` | Yes (`40dcf42` verified 2026-11-25) | Pending |
-| 04 | `phase/04-experiments` | NOT STARTED | — | No | Pending |
+| 04 | `phase/04-experiments` | PUBLISHED | `76afce4` | Yes (`14cdd7d` verified 2026-11-25) | Pending |
 | 05 | `phase/05-hyperparameter-optimization` | NOT STARTED | — | No | Pending |
 | 06 | `phase/06-analysis-and-paper` | NOT STARTED | — | No | Pending |
 | 07 | `phase/07-dashboard` | NOT STARTED | — | No | Pending |
@@ -78,3 +78,34 @@ commit on top of it, so the branch tip is always that SHA plus the status-file c
   population-size policy; P8 still pending from Phase 02.
 - **Published:** pushed to `origin/phase/03-algorithms`; remote SHA `40dcf42` matched local HEAD.
 - **Gate:** owner reviews algorithms before Phase 04 starts.
+
+## Phase 04 — Experiments
+
+- **Base branch:** `origin/phase/03-algorithms` @ `f7c8fdf` (Phase 03 was not yet merged to `main`)
+- **Published:** `origin/phase/04-experiments` @ `14cdd7d` (remote SHA verified 2026-11-25)
+- **Delivered:** study configs (`configs/studies/`, schema `study`), matrix expansion with
+  pre-run validation, paired seeds and interleaved order, a study runner with safe resume
+  (config-hash matching, failures are not retried, interrupted runs are rerun under new IDs), a
+  final-stage clean-commit guard, diagnostics from disk (9 checks plus timing and a compute
+  projection), aggregation (`runs.csv`, `summary.csv`, `manifest.json`), CLI `plan` / `run` /
+  `diagnose` / `aggregate`, `make smoke`, and a CI smoke step. Docs:
+  `docs/decisions/0005-experiment-runner-and-fairness-checks.md`.
+- **Fix found by the pilot:** exact 3-D HV went from O(n³) to a vectorized staircase (272 s ->
+  under 1 s for about 2 000 points; exactness tested against pymoo and the previous algorithm).
+- **Pilot diagnostics (`pilot_core`, PRELIMINARY, local Windows CPU):** 100/100 runs completed,
+  all 9 checks PASS (one commit, clean tree, uniform environment). The run took about 1.6 min
+  sequentially and the aggregation about 3 min. The linear projection for 20 replicates at
+  10 000 evaluations is about 245 s of run time. Artifacts are kept outside the repository and
+  were not committed.
+- **Finding for P8:** the 91-point DTLZ2 reference front holds only 92.25 % of the analytical HV,
+  so the HV ratio reaches about 1.04 (options in ADR 0005).
+- **Validation (local, Windows, Python 3.12, clean venv from a clean worktree):** Ruff lint PASS ·
+  Ruff format PASS · MyPy strict PASS (65 files) · Pytest PASS (388 tests, 99.08 % branch
+  coverage) · config validation PASS (5 files) · CI smoke steps PASS.
+- **Not run locally:** Python 3.11 (CI matrix).
+- **Not implemented:** parallel execution (`n_jobs`), pending an owner decision on timing
+  comparability. `scripts/` and `notebooks/` (ADR 0001) are not needed; the CLI covers them.
+- **Needs owner decision:** P5 (final budgets and seed counts, which the projection informs),
+  P6 (seed policy), P7, P8 (plus the reference-front finding), P10; and whether
+  `experiments.yaml` placeholders should be replaced.
+- **Gate:** owner reviews the pilot diagnostics before Phase 05 starts.

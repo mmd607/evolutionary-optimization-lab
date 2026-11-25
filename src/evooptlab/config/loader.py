@@ -15,13 +15,17 @@ from evooptlab.config.schemas import (
     BenchmarksFile,
     ExperimentsFile,
     HPOTasksFile,
+    StudyFile,
     unresolved_fields,
 )
 
-_SCHEMAS_BY_ROOT_KEY: dict[str, type[BenchmarksFile | ExperimentsFile | HPOTasksFile]] = {
+_SCHEMAS_BY_ROOT_KEY: dict[
+    str, type[BenchmarksFile | ExperimentsFile | HPOTasksFile | StudyFile]
+] = {
     "benchmark_suite": BenchmarksFile,
     "experiment": ExperimentsFile,
     "hpo": HPOTasksFile,
+    "study": StudyFile,
 }
 
 

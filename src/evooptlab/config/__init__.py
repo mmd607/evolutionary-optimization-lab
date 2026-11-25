@@ -17,6 +17,8 @@ from evooptlab.config.schemas import (
     ExperimentsFile,
     HPOConfig,
     HPOTasksFile,
+    StudyConfig,
+    StudyFile,
     unresolved_fields,
 )
 
@@ -30,6 +32,8 @@ __all__ = [
     "ExperimentsFile",
     "HPOConfig",
     "HPOTasksFile",
+    "StudyConfig",
+    "StudyFile",
     "config_hash",
     "load_config",
     "load_yaml",

@@ -197,6 +197,20 @@ python -m evooptlab validate-config --strict configs/*.yaml # final runs: open d
 Other CLI commands: `evooptlab version`, `evooptlab env` (environment metadata as JSON) and
 `evooptlab schema run-metadata` (the JSON Schema committed at `docs/schemas/run_metadata.schema.json`).
 
+Running an experiment matrix (study configs live in `configs/studies/`; `make smoke` runs the smoke
+study):
+
+```bash
+python -m evooptlab plan configs/studies/smoke.yaml        # validate and list the matrix; runs nothing
+python -m evooptlab run configs/studies/smoke.yaml         # artifacts under artifacts/experiments/pilot/
+python -m evooptlab run configs/studies/smoke.yaml --resume  # continue; settled cells are skipped
+python -m evooptlab diagnose configs/studies/smoke.yaml    # integrity, fairness and timing checks
+python -m evooptlab aggregate configs/studies/smoke.yaml   # runs.csv, summary.csv, manifest.json
+```
+
+Pilot and development results are labelled preliminary. Final-stage studies refuse to run from a
+dirty or unknown git tree. See `docs/decisions/0005-experiment-runner-and-fairness-checks.md`.
+
 ## 11. Project status
 
 Progress is tracked per phase in [`docs/phase_status.md`](docs/phase_status.md). Foundation decisions,

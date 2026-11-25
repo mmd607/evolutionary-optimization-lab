@@ -16,7 +16,7 @@ import yaml
 
 from evooptlab.benchmarks import ConstrainedSphere, Sphere, TwoSpheres
 from evooptlab.core.errors import AlgorithmError
-from evooptlab.core.experiment import ExperimentRunner, RunResult, RunSpec, _canonical_hash
+from evooptlab.core.experiment import ExperimentRunner, RunResult, RunSpec, canonical_hash
 from evooptlab.core.problem import FloatArray, ProblemOutput
 from evooptlab.storage import ArtifactLayout, RunMetadata
 from evooptlab.utils.logging import configure_logging
@@ -64,7 +64,7 @@ class TestCompletedRun:
             RunSpec("development", seed=3, budget=10, extra_config={"note": "x"}),
         )
         config = yaml.safe_load((result.run_dir / "config.yaml").read_text(encoding="utf-8"))
-        assert result.metadata.config_hash == _canonical_hash(config)
+        assert result.metadata.config_hash == canonical_hash(config)
         assert config["algorithm"] == {"name": "uniform_sampler", "parameters": {"batch_size": 5}}
         assert config["problem"]["lower_bounds"] == [-5.0, -5.0]
         assert config["budget"] == {"unit": "objective_evaluations", "max_evaluations": 10}
