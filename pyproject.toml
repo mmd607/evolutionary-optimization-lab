@@ -25,6 +25,10 @@ dependencies = [
     # Algorithm baselines (adapters) and independent reference for benchmark/metric tests.
     # Exact pin: adapters depend on 0.6.2 internals (see docs/decisions/0004-*).
     "pymoo==0.6.2",
+    # HPO tasks (Phase 05): model family, cross-validation, bundled dataset (docs/decisions/0006-*).
+    "scikit-learn>=1.5,<2",
+    # Model-based baseline (TPE) behind the ask/tell adapter; tested pin in requirements/.
+    "optuna>=4.0,<6",
 ]
 
 [project.scripts]
@@ -87,7 +91,7 @@ plugins = ["pydantic.mypy"]
 files = ["src", "tests"]
 
 [[tool.mypy.overrides]]
-module = ["pymoo", "pymoo.*"]
+module = ["pymoo", "pymoo.*", "sklearn", "sklearn.*"]
 ignore_missing_imports = true
 
 [tool.pydantic-mypy]
