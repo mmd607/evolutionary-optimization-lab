@@ -76,6 +76,11 @@ select = [
     "NPY",      # numpy-specific
 ]
 
+[tool.ruff.lint.per-file-ignores]
+# scikit-learn convention: a feature matrix is ``X``.
+"src/evooptlab/hpo/*" = ["N803", "N806"]
+"tests/**/*hpo*.py" = ["N803", "N806"]
+
 [tool.ruff.format]
 quote-style = "double"
 line-ending = "lf"

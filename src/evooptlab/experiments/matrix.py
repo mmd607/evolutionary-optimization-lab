@@ -15,16 +15,18 @@ Design rules (ADR 0005):
 
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
+from pathlib import Path
 from typing import Any
 
 from evooptlab.algorithms import get_algorithm
 from evooptlab.benchmarks.registry import build_problem
 from evooptlab.config.schemas import (
-    BenchmarkProblemConfig,
     DerivedSeeds,
+    HPOProblemConfig,
     StudyAlgorithmConfig,
     StudyConfig,
+    StudyProblemConfig,
 )
 from evooptlab.core.algorithm import Algorithm
 from evooptlab.core.experiment import ExperimentRunner, RunSpec, canonical_hash
@@ -39,21 +41,32 @@ class StudyError(ValueError):
 CellKey = tuple[str, str, int]  # (problem, algorithm, replicate)
 
 
+def build_study_problem(entry: StudyProblemConfig, data_dir: Path | str = "data") -> Problem:
+    """Instantiate a benchmark or HPO problem. HPO problems load their data lazily."""
+    if isinstance(entry, HPOProblemConfig):
+        from evooptlab.hpo.problem import HPOProblem
+
+        return HPOProblem(entry, data_dir)
+    return build_problem(entry)
+
+
 @dataclass(frozen=True)
 class RunCell:
     """One planned run: a (problem, algorithm, replicate) combination with its seed."""
 
-    problem: BenchmarkProblemConfig
+    problem: StudyProblemConfig
     algorithm: StudyAlgorithmConfig
     replicate: int
     seed: int
+    #: Data cache for HPO problems; not part of the cell's identity or config hash.
+    data_dir: Path = field(default=Path("data"), compare=False)
 
     @property
     def key(self) -> CellKey:
         return (self.problem.name, self.algorithm.name, self.replicate)
 
     def build_problem(self) -> Problem:
-        return build_problem(self.problem)
+        return build_study_problem(self.problem, self.data_dir)
 
     def build_algorithm(self) -> Algorithm:
         return get_algorithm(self.algorithm.name, **self.algorithm.parameters)
@@ -85,7 +98,7 @@ def cell_config_hash(study: StudyConfig, cell: RunCell) -> str:
     return canonical_hash(document)
 
 
-def build_matrix(study: StudyConfig) -> list[RunCell]:
+def build_matrix(study: StudyConfig, data_dir: Path | str | None = None) -> list[RunCell]:
     """Validate ``study`` and return its cells in execution order.
 
     Raises:
@@ -95,7 +108,7 @@ def build_matrix(study: StudyConfig) -> list[RunCell]:
     problems: dict[str, Problem] = {}
     for entry in study.problems:
         try:
-            problems[entry.name] = build_problem(entry)
+            problems[entry.name] = build_study_problem(entry)
         except ValueError as exc:
             errors.append(f"problem {entry.name}: {exc}")
     algorithms: dict[str, Algorithm] = {}
@@ -115,11 +128,12 @@ def build_matrix(study: StudyConfig) -> list[RunCell]:
     if errors:
         raise StudyError("invalid study matrix:\n  " + "\n  ".join(errors))
 
+    root = Path(study.data_dir if data_dir is None else data_dir)
     cells: list[RunCell] = []
     for p_entry in study.problems:
         for replicate, seed in enumerate(replicate_seeds(study, p_entry.name)):
             cells.extend(
-                RunCell(problem=p_entry, algorithm=a, replicate=replicate, seed=seed)
+                RunCell(problem=p_entry, algorithm=a, replicate=replicate, seed=seed, data_dir=root)
                 for a in study.algorithms
             )
     return cells
