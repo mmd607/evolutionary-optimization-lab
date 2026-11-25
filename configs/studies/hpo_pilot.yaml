@@ -1,0 +1,64 @@
+# HPO pilot (Stage C), PRELIMINARY. Purpose: validate the pipeline on real tasks and measure
+# per-trial cost for the P5 compute estimate. Not a result.
+#
+# Every value marked "proposal" is an ADR 0006 proposal awaiting the owner's decision:
+#   * model family, search space and population sizes (P10: tuning protocol);
+#   * split strategies and CV (P4: bank_marketing is date-ordered; a stratified random split is
+#     used here only to exercise the pipeline);
+#   * budget (30 trials) and 3 seeds (P5: the protocol asks for >= 10 seeds on final HPO runs).
+# wine_quality is excluded until P3 (task type, target metric, variant) is decided.
+study:
+  name: hpo_pilot
+  stage: pilot
+  output_dir: artifacts/hpo_pilot
+  data_dir: data
+  problems:
+    - name: breast_cancer-hgb
+      task: breast_cancer_smoke          # pipeline check only; must not drive conclusions
+      task_type: classification
+      target_metric: f1_macro
+      objectives: [validation_error]
+      model: hist_gradient_boosting      # proposal
+      model_seed: 0
+      search_space: &space               # proposal
+        learning_rate: {type: float, low: 0.01, high: 0.3, log: true}
+        max_iter: {type: int, low: 20, high: 300, log: true}
+        max_leaf_nodes: {type: int, low: 4, high: 64, log: true}
+        min_samples_leaf: {type: int, low: 2, high: 100, log: true}
+        l2_regularization: {type: float, low: 0.0001, high: 10.0, log: true}
+      split: {strategy: stratified, test_fraction: 0.2, random_seed: 2026}
+      cv: {strategy: stratified_kfold, n_splits: 5, random_seed: 2026}
+    - name: bank_marketing-hgb
+      task: bank_marketing
+      task_type: classification
+      target_metric: f1_macro
+      objectives: [validation_error]
+      model: hist_gradient_boosting
+      model_seed: 0
+      search_space: *space
+      split: {strategy: stratified, test_fraction: 0.2, random_seed: 2026}   # proposal (P4)
+      cv: {strategy: stratified_kfold, n_splits: 5, random_seed: 2026}
+    - name: california_housing-hgb
+      task: california_housing
+      task_type: regression
+      target_metric: neg_root_mean_squared_error
+      objectives: [validation_error]
+      model: hist_gradient_boosting
+      model_seed: 0
+      search_space: *space
+      split: {strategy: random, test_fraction: 0.2, random_seed: 2026}
+      cv: {strategy: kfold, n_splits: 5, random_seed: 2026}
+  algorithms:                            # population sizes: proposal (P10)
+    - name: random_search
+      parameters: {batch_size: 10}
+    - name: ga
+      parameters: {pop_size: 10}
+    - name: de
+      parameters: {pop_size: 10}
+    - name: pso
+      parameters: {pop_size: 10}
+    - name: optuna_tpe
+      parameters: {}
+  budget: {unit: objective_evaluations, max_evaluations: 30}
+  seeds: {policy: explicit, values: [11, 23, 37]}
+  timeout_seconds: 7200

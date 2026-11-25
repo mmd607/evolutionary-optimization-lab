@@ -113,3 +113,13 @@ class TestMatrix:
         assert summary["n_runs"] == 8
         assert summary["n_replicates_per_cell"] == 2
         assert summary["total_objective_evaluations"] == 8 * 30
+
+
+def test_every_shipped_study_loads_strictly_and_plans(configs_dir: Path) -> None:
+
+    paths = sorted((configs_dir / "studies").glob("*.yaml"))
+    assert {p.stem for p in paths} >= {"smoke", "pilot_core", "hpo_smoke", "hpo_pilot"}
+    for path in paths:
+        config = load_config(path, strict=True)
+        assert isinstance(config, StudyFile), path
+        assert build_matrix(config.study), path

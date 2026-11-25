@@ -67,3 +67,13 @@ jobs:
           python -m evooptlab run configs/studies/smoke.yaml --root "$root" --resume
           python -m evooptlab diagnose configs/studies/smoke.yaml --root "$root"
           python -m evooptlab aggregate configs/studies/smoke.yaml --root "$root"
+
+      - name: HPO smoke study end-to-end (bundled data, no download)
+        shell: bash
+        run: |
+          root="$RUNNER_TEMP/evooptlab-hpo-smoke"
+          python -m evooptlab plan configs/studies/hpo_smoke.yaml
+          python -m evooptlab run configs/studies/hpo_smoke.yaml --root "$root"
+          python -m evooptlab test-eval configs/studies/hpo_smoke.yaml --root "$root"
+          python -m evooptlab diagnose configs/studies/hpo_smoke.yaml --root "$root"
+          python -m evooptlab aggregate configs/studies/hpo_smoke.yaml --root "$root"
