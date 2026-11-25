@@ -9,6 +9,8 @@
   tests belong to Phase 06 and are pre-registered (P9).
 * Outputs are written to a new directory and never overwrite anything. Non-final stages are
   labelled ``preliminary`` in the manifest, so pilot numbers cannot be mistaken for final ones.
+* HPO studies (ADR 0006) have no reference front. Their rows report the validation-selected
+  trial and its stored held-out test evaluation instead of front-based indicators.
 """
 
 from __future__ import annotations
@@ -27,6 +29,7 @@ from typing import Any
 
 from evooptlab.evaluation.quality import QualityPolicy, compute_quality
 from evooptlab.experiments.diagnostics import DiagnosticsReport, StudyCollection
+from evooptlab.experiments.hpo_evaluation import SELECTION_RULE
 from evooptlab.experiments.matrix import StudyError, matrix_summary
 from evooptlab.experiments.records import history_objectives
 from evooptlab.utils.environment import capture_environment
@@ -68,6 +71,33 @@ RUN_COLUMNS: tuple[str, ...] = (
     *QUALITY_KEYS,
     "missing_reason",
 )
+HPO_KEYS: tuple[str, ...] = (
+    "n_trials",
+    "n_failed_trials",
+    "selected_evaluation_id",
+    "best_validation_error",
+    "target_metric",
+    "test_score",
+    "test_error",
+    "hyperparameters",
+)
+HPO_SUMMARY_METRICS: tuple[str, ...] = (
+    "best_validation_error",
+    "test_error",
+    "n_failed_trials",
+    "wall_clock_seconds",
+)
+HPO_RUN_COLUMNS: tuple[str, ...] = (
+    "problem",
+    "algorithm",
+    "replicate",
+    "seed",
+    "run_id",
+    "outcome",
+    *TIMING_KEYS,
+    *HPO_KEYS,
+    "missing_reason",
+)
 
 
 def run_rows(
@@ -92,7 +122,10 @@ def run_rows(
             **dict.fromkeys(QUALITY_KEYS),
             "missing_reason": None,
         }
-        if record.metadata.outcome == "completed":
+        if collection.study.is_hpo:
+            row = {k: v for k, v in row.items() if k not in QUALITY_KEYS}
+            row.update(_hpo_fields(collection, record))
+        elif record.metadata.outcome == "completed":
             problem = cell.build_problem()
             f, feasible = history_objectives(record.read_history(), problem.spec.n_objectives)
             front = problem.pareto_front()  # type: ignore[attr-defined]
@@ -105,6 +138,40 @@ def run_rows(
             )
         rows.append(row)
     return rows
+
+
+def _hpo_fields(collection: StudyCollection, record: Any) -> dict[str, Any]:
+    from evooptlab.hpo.problem import select_trial
+
+    fields: dict[str, Any] = dict.fromkeys(HPO_KEYS)
+    if record.metadata.outcome != "completed":
+        fields["missing_reason"] = (
+            f"run {record.metadata.outcome}: {record.metadata.failure_reason}"
+        )
+        return fields
+    rows = record.read_history()
+    chosen = select_trial(rows)
+    fields["n_trials"] = len(rows)
+    fields["n_failed_trials"] = sum(r["feasible"] != "True" for r in rows)
+    if chosen is None:
+        fields["missing_reason"] = "no successful trial"
+        return fields
+    fields["selected_evaluation_id"] = int(chosen["evaluation_id"])
+    fields["best_validation_error"] = float(chosen["f_0"])
+    stored = collection.test_evaluations.get(record.run_id)
+    test = (stored or {}).get("test")
+    if not test:
+        fields["missing_reason"] = "test evaluation not run"
+        return fields
+    fields.update(
+        {
+            "target_metric": test["target_metric"],
+            "test_score": test["test_score"],
+            "test_error": test["test_error"],
+            "hyperparameters": json.dumps(test["hyperparameters"], sort_keys=True),
+        }
+    )
+    return fields
 
 
 def _describe(values: list[float]) -> dict[str, float | None]:
@@ -141,7 +208,8 @@ def summary_rows(collection: StudyCollection, rows: list[dict[str, Any]]) -> lis
             "n_failed": len(cell_rows) - len(completed),
             "n_missing": n_planned - len(cell_rows),
         }
-        for metric in SUMMARY_METRICS:
+        metrics = HPO_SUMMARY_METRICS if collection.study.is_hpo else SUMMARY_METRICS
+        for metric in metrics:
             values = [float(r[metric]) for r in completed if r[metric] is not None]
             summary[f"{metric}__n"] = len(values)
             for stat, value in _describe(values).items():
@@ -206,7 +274,8 @@ def write_aggregate(
         "created_at_utc": datetime.now(UTC).isoformat(),
         "aggregator_git_commit": git.commit,
         "aggregator_git_dirty": git.dirty,
-        "quality_policy": asdict(policy),
+        "quality_policy": None if collection.study.is_hpo else asdict(policy),
+        "hpo_selection_rule": SELECTION_RULE if collection.study.is_hpo else None,
         "matrix": matrix_summary(collection.study, collection.cells),
         "diagnostics": report.to_dict(),
         "run_ids": [r["run_id"] for r in rows],
@@ -217,7 +286,7 @@ def write_aggregate(
         },
     }
     files = {
-        "runs.csv": to_csv(rows, RUN_COLUMNS),
+        "runs.csv": to_csv(rows, HPO_RUN_COLUMNS if collection.study.is_hpo else RUN_COLUMNS),
         "summary.csv": to_csv(summary, summary_columns),
         "manifest.json": json.dumps(manifest, indent=2, sort_keys=True) + "\n",
     }

@@ -16,19 +16,27 @@ from __future__ import annotations
 import statistics
 from collections import defaultdict
 from dataclasses import dataclass, field
+from pathlib import Path
 from typing import Any, Literal
 
 from evooptlab.config.schemas import StudyConfig
 from evooptlab.core.experiment import canonical_hash
 from evooptlab.experiments.matrix import CellKey, RunCell, build_matrix, cell_config_hash
-from evooptlab.experiments.records import RunRecord, scan_stage
+from evooptlab.experiments.records import RunRecord, read_test_evaluations, scan_stage
 from evooptlab.experiments.study import index_by_hash
 from evooptlab.storage.layout import ArtifactLayout
 
 Status = Literal["PASS", "WARN", "FAIL"]
 _RANK: dict[Status, int] = {"PASS": 0, "WARN": 1, "FAIL": 2}
 #: Packages whose versions must not differ between compared runs.
-TRACKED_PACKAGES: tuple[str, ...] = ("numpy", "scipy", "pymoo", "pydantic")
+TRACKED_PACKAGES: tuple[str, ...] = (
+    "numpy",
+    "scipy",
+    "pymoo",
+    "pydantic",
+    "scikit-learn",
+    "optuna",
+)
 
 
 @dataclass(frozen=True)
@@ -50,15 +58,19 @@ class StudyCollection:
     interrupted: list[tuple[CellKey, str]] = field(default_factory=list)
     unplanned: list[str] = field(default_factory=list)
     anomalies: list[tuple[str, str]] = field(default_factory=list)
+    #: HPO studies only: stored held-out test evaluations by run ID.
+    test_evaluations: dict[str, dict[str, Any]] = field(default_factory=dict)
 
     @property
     def missing(self) -> list[CellKey]:
         return [c.key for c in self.cells if c.key not in self.canonical]
 
 
-def collect_study(study: StudyConfig, layout: ArtifactLayout) -> StudyCollection:
+def collect_study(
+    study: StudyConfig, layout: ArtifactLayout, data_dir: Path | None = None
+) -> StudyCollection:
     """Match stored runs to planned cells by config hash (the same rule resume uses)."""
-    cells = build_matrix(study)
+    cells = build_matrix(study, data_dir)
     scan = scan_stage(layout, study.stage)
     index = index_by_hash(scan.records)
     collection = StudyCollection(study=study, cells=cells, anomalies=scan.anomalies)
@@ -78,6 +90,8 @@ def collect_study(study: StudyConfig, layout: ArtifactLayout) -> StudyCollection
         for r in scan.records
         if r.study == study.name and r.metadata.config_hash not in planned
     ]
+    if study.is_hpo:
+        collection.test_evaluations = read_test_evaluations(layout, study.stage)
     return collection
 
 
@@ -233,6 +247,65 @@ def _check_failed_evaluations(c: StudyCollection) -> Check:
     return Check("failed_evaluations", "PASS", "no objective evaluation failed")
 
 
+def _check_failed_trials(c: StudyCollection) -> Check:
+    """HPO: trials whose fit raised are kept as infeasible results (ADR 0006)."""
+    details = []
+    for record in c.canonical.values():
+        if record.metadata.outcome != "completed":
+            continue
+        rows = record.read_history()
+        n_failed = sum(r["feasible"] != "True" for r in rows)
+        if n_failed:
+            details.append(f"{record.run_id}: {n_failed} of {len(rows)} trials failed")
+    if details:
+        return Check(
+            "failed_trials",
+            "WARN",
+            f"{len(details)} runs contain failed trials (recorded as infeasible)",
+            tuple(details),
+        )
+    return Check("failed_trials", "PASS", "every trial fitted and scored")
+
+
+def _check_test_evaluations(c: StudyCollection) -> Check:
+    """HPO: every completed run has exactly one consistent held-out test evaluation."""
+    from evooptlab.hpo.problem import select_trial
+
+    missing, broken = [], []
+    for record in c.canonical.values():
+        if record.metadata.outcome != "completed":
+            continue
+        stored = c.test_evaluations.get(record.run_id)
+        if stored is None:
+            missing.append(record.run_id)
+            continue
+        if "unreadable" in stored:
+            broken.append(f"{record.run_id}: unreadable ({stored['unreadable']})")
+            continue
+        if stored.get("config_hash") != record.metadata.config_hash:
+            broken.append(f"{record.run_id}: config hash differs from the run")
+        chosen = select_trial(record.read_history())
+        expected = None if chosen is None else int(chosen["evaluation_id"])
+        if stored.get("selected_evaluation_id") != expected:
+            broken.append(f"{record.run_id}: selected trial is not the validation-best trial")
+    if broken:
+        return Check(
+            "test_evaluations",
+            "FAIL",
+            f"{len(broken)} test evaluations are inconsistent with their runs",
+            tuple(broken),
+        )
+    if missing:
+        status: Status = "FAIL" if c.study.stage == "final" else "WARN"
+        return Check(
+            "test_evaluations",
+            status,
+            f"{len(missing)} completed runs have no test evaluation (run `evooptlab test-eval`)",
+            tuple(missing),
+        )
+    return Check("test_evaluations", "PASS", "every completed run has one consistent evaluation")
+
+
 CHECKS = (
     _check_coverage,
     _check_failed_runs,
@@ -321,8 +394,13 @@ class DiagnosticsReport:
         }
 
 
+HPO_CHECKS = (_check_failed_trials, _check_test_evaluations)
+
+
 def diagnose(collection: StudyCollection) -> DiagnosticsReport:
     checks = [check(collection) for check in CHECKS]
+    if collection.study.is_hpo:
+        checks += [check(collection) for check in HPO_CHECKS]
     status = max((c.status for c in checks), key=_RANK.__getitem__)
     return DiagnosticsReport(
         study=collection.study.name,

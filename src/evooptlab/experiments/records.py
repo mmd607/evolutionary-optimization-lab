@@ -114,3 +114,31 @@ def history_objectives(
     ).reshape(len(rows), n_objectives)
     feasible = np.array([r["feasible"] == "True" for r in rows], dtype=np.bool_)
     return f, feasible
+
+
+# ---------------------------------------------------------------------------------------------
+# HPO test evaluations (written by ``evooptlab test-eval``; see experiments/hpo_evaluation.py)
+# ---------------------------------------------------------------------------------------------
+def held_out_dir(layout: ArtifactLayout, stage: RunStage) -> Path:
+    return layout.root / "test_evaluations" / stage
+
+
+def held_out_path(layout: ArtifactLayout, stage: RunStage, run_id: str) -> Path:
+    return held_out_dir(layout, stage) / f"{run_id}.json"
+
+
+def read_test_evaluations(layout: ArtifactLayout, stage: RunStage) -> dict[str, dict[str, Any]]:
+    """Stored evaluations by run ID; unreadable files map to ``{"unreadable": reason}``."""
+    out: dict[str, dict[str, Any]] = {}
+    directory = held_out_dir(layout, stage)
+    if not directory.is_dir():
+        return out
+    for path in sorted(directory.glob("*.json")):
+        try:
+            data = json.loads(path.read_text(encoding="utf-8"))
+            if not isinstance(data, dict):
+                raise ValueError("not a JSON object")
+            out[path.stem] = data
+        except (OSError, ValueError) as exc:
+            out[path.stem] = {"unreadable": f"{type(exc).__name__}: {exc}"}
+    return out
