@@ -27,6 +27,13 @@ Commands
     re-verified, never downloaded again).
 ``evooptlab data info [TASK ...] [--data-dir DIR]``
     Print dataset provenance (source, licence, citation, checksum) and cache status as JSON.
+``evooptlab report AGGREGATE_DIR [--plan FILE] [--reporting FILE] [--output DIR]``
+    Statistics, tables, figures and ``values.json`` from one aggregate, under the analysis plan.
+    Final-stage aggregates need a frozen plan and a clean tree.
+``evooptlab audit-claims MANUSCRIPT [--values FILE ...] [--json]``
+    Check citations, typed numbers, claim evidence and wording. Exit code 1 on any FAIL.
+``evooptlab render-paper MANUSCRIPT --values FILE [...] --output FILE``
+    Substitute ``{{value:KEY}}`` references with generated values (never overwrites).
 
 Study commands load configs strictly, and read and write artifacts under the study's
 ``output_dir`` unless ``--root`` is given. They exit with code 2 on a config or study error.
@@ -128,6 +135,27 @@ def _build_parser() -> argparse.ArgumentParser:
         command.add_argument(
             "--data-dir", type=Path, default=None, help="dataset cache (default: study data_dir)"
         )
+
+    report = sub.add_parser("report", help="analysis, tables and figures for an aggregate")
+    report.add_argument("aggregate", type=Path, metavar="AGGREGATE_DIR")
+    report.add_argument("--plan", type=Path, default=Path("configs/analysis_plan.yaml"))
+    report.add_argument("--reporting", type=Path, default=Path("configs/reporting.yaml"))
+    report.add_argument("--output", type=Path, default=None, help="new output directory")
+    report.add_argument(
+        "--root", type=Path, default=None, help="artifact root holding the run histories"
+    )
+    audit = sub.add_parser("audit-claims", help="audit a manuscript's claims and numbers")
+    audit.add_argument("manuscript", type=Path, metavar="MANUSCRIPT")
+    audit.add_argument("--matrix", type=Path, default=Path("reports/paper/claim_evidence.csv"))
+    audit.add_argument(
+        "--literature", type=Path, default=Path("docs/literature/literature_matrix.csv")
+    )
+    audit.add_argument("--values", type=Path, nargs="*", default=[], metavar="FILE")
+    audit.add_argument("--json", action="store_true", help="print the report as JSON")
+    render = sub.add_parser("render-paper", help="fill value references in a manuscript")
+    render.add_argument("manuscript", type=Path, metavar="MANUSCRIPT")
+    render.add_argument("--values", type=Path, nargs="+", required=True, metavar="FILE")
+    render.add_argument("--output", type=Path, required=True)
 
     data = sub.add_parser("data", help="HPO dataset cache and provenance")
     data_sub = data.add_subparsers(dest="data_command", required=True)
@@ -273,6 +301,80 @@ def _cmd_data(args: argparse.Namespace) -> int:
         return 2
 
 
+def _cmd_report(args: argparse.Namespace) -> int:
+    from evooptlab.analysis.compare import AnalysisError, load_aggregate
+    from evooptlab.config import AnalysisPlanFile, ReportingFile
+    from evooptlab.reporting.report import write_report
+
+    try:
+        plan_file = load_config(args.plan, strict=True)
+        reporting_file = load_config(args.reporting, strict=True)
+        if not isinstance(plan_file, AnalysisPlanFile) or not isinstance(
+            reporting_file, ReportingFile
+        ):
+            raise ConfigError("--plan must be an analysis_plan file, --reporting a reporting file")
+        data = load_aggregate(args.aggregate)
+        output = args.output or args.aggregate.parent.parent.parent / "reports" / (
+            f"{args.aggregate.name}__{plan_file.analysis_plan.name}"
+        )
+        path = write_report(
+            data,
+            plan_file.analysis_plan,
+            reporting_file.reporting,
+            output,
+            plan_sha256=config_hash(plan_file),
+            artifact_root=args.root,
+        )
+    except (ConfigError, AnalysisError, FileExistsError) as exc:
+        print(f"error: {exc}", file=sys.stderr)
+        return 2
+    label = "PRELIMINARY" if data.stage != "final" else plan_file.analysis_plan.status
+    print(f"wrote {path} ({label})")
+    return 0
+
+
+def _cmd_audit(args: argparse.Namespace) -> int:
+    from evooptlab.reporting.claims import audit
+
+    try:
+        report = audit(
+            args.manuscript,
+            matrix=args.matrix,
+            literature=args.literature,
+            values=args.values,
+            repo_root=Path.cwd(),
+        )
+    except (OSError, KeyError, ValueError) as exc:
+        print(f"error: {exc}", file=sys.stderr)
+        return 2
+    if args.json:
+        print(json.dumps(report.to_dict(), indent=2))
+    else:
+        print(
+            f"{args.manuscript} [{report.manuscript_status}]: {report.status} "
+            f"({report.n_claims} claims, {report.n_citations} citations, "
+            f"{report.n_values} value references)"
+        )
+        for f in report.findings:
+            print(f"  {f.severity:4}  line {f.line:<4} {f.rule}: {f.message}")
+        print("  note: whether each source supports its sentence still needs human review")
+    return 1 if report.status == "FAIL" else 0
+
+
+def _cmd_render(args: argparse.Namespace) -> int:
+    from evooptlab.reporting.claims import load_values, render
+
+    try:
+        text = render(args.manuscript.read_text(encoding="utf-8"), load_values(args.values))
+        with args.output.open("x", encoding="utf-8", newline="\n") as handle:
+            handle.write(text)
+    except (OSError, ValueError) as exc:
+        print(f"error: {exc}", file=sys.stderr)
+        return 2
+    print(f"wrote {args.output}")
+    return 0
+
+
 def _cmd_study(args: argparse.Namespace) -> int:
     try:
         study, layout = _load_study(args.study, args.root)
@@ -311,4 +413,10 @@ def main(argv: Sequence[str] | None = None) -> int:
         return _cmd_study(args)
     if args.command == "data":
         return _cmd_data(args)
+    if args.command == "report":
+        return _cmd_report(args)
+    if args.command == "audit-claims":
+        return _cmd_audit(args)
+    if args.command == "render-paper":
+        return _cmd_render(args)
     parser.error(f"unknown command {args.command!r}")  # pragma: no cover - argparse guards this

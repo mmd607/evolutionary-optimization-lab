@@ -243,3 +243,22 @@ def test_hpo_report_uses_best_so_far_curves(configs_dir: Path, tmp_path: Path) -
     )
     medians = [float(r["median"]) for r in curve if r["algorithm"] == "random_search"]
     assert medians == sorted(medians, reverse=True)  # best-so-far never gets worse
+
+
+def test_report_cli(
+    aggregate: Path, configs_dir: Path, tmp_path: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    from evooptlab.cli import main
+
+    plan_file = tmp_path / "plan.yaml"
+    text = (configs_dir / "analysis_plan.yaml").read_text(encoding="utf-8")
+    plan_file.write_text(text.replace("min_replicates: 10", "min_replicates: 2"), encoding="utf-8")
+    common = ["--plan", str(plan_file), "--reporting", str(configs_dir / "reporting.yaml")]
+    out = tmp_path / "rep"
+    assert main(["report", str(aggregate), *common, "--output", str(out)]) == 0
+    assert "PRELIMINARY" in capsys.readouterr().out
+    assert (out / "values.json").exists()
+    assert main(["report", str(aggregate), *common, "--output", str(out)]) == 2  # never overwrites
+    wrong = ["--plan", str(configs_dir / "reporting.yaml"), "--reporting", str(plan_file)]
+    assert main(["report", str(aggregate), *wrong]) == 2
+    assert "analysis_plan file" in capsys.readouterr().err
