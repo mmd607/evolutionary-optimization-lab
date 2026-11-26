@@ -1,0 +1,10 @@
+# Streamlit settings for the read-only dashboard (docs/decisions/0008-*).
+# Read when Streamlit is started from the repository root.
+
+[server]
+# Serve on this machine only. Pass --server.address explicitly to expose it on a network.
+address = "localhost"
+
+[browser]
+# No usage statistics are sent.
+gatherUsageStats = false
