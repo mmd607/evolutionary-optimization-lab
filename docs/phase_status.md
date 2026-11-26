@@ -15,7 +15,7 @@ commit on top of it, so the branch tip is always that SHA plus the status-file c
 | 03 | `phase/03-algorithms` | PUBLISHED | `40dcf42` | Yes (`40dcf42` verified 2026-11-25) | Pending |
 | 04 | `phase/04-experiments` | PUBLISHED | `76afce4` | Yes (`14cdd7d` verified 2026-11-25) | Pending |
 | 05 | `phase/05-hyperparameter-optimization` | PUBLISHED | `28b6d51` | Yes (`2a136eb` verified 2026-11-26) | Pending |
-| 06 | `phase/06-analysis-and-paper` | READY FOR REVIEW | `728cd4b` | No | Pending |
+| 06 | `phase/06-analysis-and-paper` | PUBLISHED | `728cd4b` | Yes (`7fd6841` verified 2026-11-26) | Pending |
 | 07 | `phase/07-dashboard` | NOT STARTED | — | No | Pending |
 | 08 | `phase/08-release-review` | NOT STARTED | — | No | Pending |
 
@@ -155,6 +155,8 @@ commit on top of it, so the branch tip is always that SHA plus the status-file c
 
 ## Phase 06 — Analysis and paper
 
+- **Published:** `origin/phase/06-analysis-and-paper` @ `7fd6841` (remote SHA verified
+  2026-11-26)
 - **Base branch:** `origin/phase/05-hyperparameter-optimization` @ `87fdec5` (Phases 03–05 are not
   yet merged to `main`)
 - **Scope note:** no final run artifacts exist (final runs are blocked on P3, P4, P5, P8, P9 and
