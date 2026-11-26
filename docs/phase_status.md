@@ -15,7 +15,7 @@ commit on top of it, so the branch tip is always that SHA plus the status-file c
 | 03 | `phase/03-algorithms` | PUBLISHED | `40dcf42` | Yes (`40dcf42` verified 2026-11-25) | Pending |
 | 04 | `phase/04-experiments` | PUBLISHED | `76afce4` | Yes (`14cdd7d` verified 2026-11-25) | Pending |
 | 05 | `phase/05-hyperparameter-optimization` | PUBLISHED | `28b6d51` | Yes (`2a136eb` verified 2026-11-26) | Pending |
-| 06 | `phase/06-analysis-and-paper` | NOT STARTED | — | No | Pending |
+| 06 | `phase/06-analysis-and-paper` | READY FOR REVIEW | `728cd4b` | No | Pending |
 | 07 | `phase/07-dashboard` | NOT STARTED | — | No | Pending |
 | 08 | `phase/08-release-review` | NOT STARTED | — | No | Pending |
 
@@ -152,3 +152,48 @@ commit on top of it, so the branch tip is always that SHA plus the status-file c
   - Whether `fit_seconds` becomes a second objective.
   - P11: branch naming (this branch follows the workflow instructions).
 - **Gate:** owner reviews the leakage controls and pilot diagnostics before Phase 06 starts.
+
+## Phase 06 — Analysis and paper
+
+- **Base branch:** `origin/phase/05-hyperparameter-optimization` @ `87fdec5` (Phases 03–05 are not
+  yet merged to `main`)
+- **Scope note:** no final run artifacts exist (final runs are blocked on P3, P4, P5, P8, P9 and
+  P10). This phase therefore delivers the tested pipeline and guards and reports **no result**.
+- **Delivered:**
+  - The analysis plan config (P9, `status: proposal`), with a pre-registration guard: final-stage
+    results are refused unless the plan is frozen and the tree is clean.
+  - Statistics tested against scipy and hand-computed values: Wilcoxon, Holm, Friedman, A12,
+    bootstrap CIs.
+  - `evooptlab report`: analysis, Markdown and LaTeX tables, SVG and PDF figures with their data,
+    and `values.json`.
+  - `evooptlab audit-claims` and `render-paper`.
+  - A manuscript draft with a claim-evidence matrix (16 method claims supported, 4 result claims
+    pending) that passes the audit in CI.
+  - Docs: `docs/decisions/0007-analysis-reporting-and-claims-audit.md`.
+- **Gate ("claims audited"):** the draft passes `audit-claims` (0 citations; literature matrix
+  empty). Citation support still needs human review.
+- **Fixes:** the Optuna dependency floor is raised to `>= 5.0` (the adapter needs
+  `Trial.set_constraint`); scipy and matplotlib are declared directly.
+- **Finding (P5/P9):** the smallest paired two-sided Wilcoxon p-value is 2/2^n. Under the proposed
+  Holm family of 30 tests per metric, n = 10 replicates can never yield a rejection; n ≥ 11 is
+  needed (ADR 0007).
+- **Pilot analyses:** `report` on both pilot aggregates gives PRELIMINARY tables and figures, with
+  every test "not run" at `min_replicates: 10`. Not committed.
+- **Validation (local, Windows, Python 3.12, clean venv from a clean worktree):** Ruff lint PASS
+  · Ruff format PASS · MyPy strict PASS (92 files) · Pytest PASS (511 tests, 98.20 % branch
+  coverage) · config validation PASS (9 files) · CI smoke, HPO smoke + report, and claims-audit
+  steps PASS · every intermediate commit passes MyPy and Pytest on its own.
+- **Observation:** the first Pytest run in the fresh venv reported 30 warnings, all tests passing.
+  Two later full runs in the same venv reported none, and the cause was not identified (an empty
+  matplotlib cache did not reproduce it).
+- **Not run locally:** Python 3.11 (CI matrix).
+- **Not done / blocked:** the final analysis and result text, freezing the plan (P9), the
+  literature review and related work, the ablation and sensitivity study (RQ2), and the technical
+  report.
+- **Phase 05 acceptance note:** only two non-smoke HPO tasks ran in the pilot; Wine Quality
+  waits for P3.
+- **Needs owner decision:** P9 (freeze or change the plan, including the Holm family and the
+  replicate count), plus the open P3, P4, P5, P8 and P10; also P1 (licence) and P2 (authors) for
+  the manuscript.
+- **Gate:** owner reviews the analysis plan, the audit rules and the manuscript draft before
+  Phase 07 starts.
