@@ -16,7 +16,7 @@ commit on top of it, so the branch tip is always that SHA plus the status-file c
 | 04 | `phase/04-experiments` | PUBLISHED | `76afce4` | Yes (`14cdd7d` verified 2026-11-25) | Pending |
 | 05 | `phase/05-hyperparameter-optimization` | PUBLISHED | `28b6d51` | Yes (`2a136eb` verified 2026-11-26) | Pending |
 | 06 | `phase/06-analysis-and-paper` | PUBLISHED | `728cd4b` | Yes (`7fd6841` verified 2026-11-26) | Pending |
-| 07 | `phase/07-dashboard` | NOT STARTED | — | No | Pending |
+| 07 | `phase/07-dashboard` | READY FOR REVIEW | `85c898f` | No | Pending |
 | 08 | `phase/08-release-review` | NOT STARTED | — | No | Pending |
 
 ## Phase 00 — Foundation
@@ -199,3 +199,44 @@ commit on top of it, so the branch tip is always that SHA plus the status-file c
   the manuscript.
 - **Gate:** owner reviews the analysis plan, the audit rules and the manuscript draft before
   Phase 07 starts.
+
+## Phase 07 — Dashboard
+
+- **Base branch:** `origin/phase/06-analysis-and-paper` @ `449a011` (Phases 03–06 are not yet merged
+  to `main`)
+- **Delivered:**
+  - `evooptlab.explorer`: a read-only data layer with no UI imports (artifact catalog, staleness,
+    comparability warnings, fronts, convergence bands, HPO trials and stored test results).
+  - `dashboard/`: a Streamlit + Plotly app with six pages (Overview, Benchmark Explorer,
+    Convergence Analysis, HPO Explorer, Statistical Comparison, Run Details), installed with the
+    optional extra `.[dashboard]`.
+  - Integrity rules:
+    - non-final stages are labelled PRELIMINARY;
+    - mixed budgets are warned about and never overlaid;
+    - stale aggregates and reports are flagged;
+    - statistical tests are shown only from `evooptlab report`, and HPO test results only from
+      `test-eval`;
+    - curves are computed only on request;
+    - empty states say "No results available.".
+  - Nothing is written (tested by hashing the artifact root before and after every page).
+  - The server binds to `localhost` and sends no usage statistics (`.streamlit/config.toml`).
+  - Launch: `python -m streamlit run dashboard/app.py -- --root ROOT`. `dashboard/check_launch.py`
+    checks the launch, locally and in CI.
+  - Docs: `docs/decisions/0008-read-only-dashboard.md`.
+- **Checked on real artifacts:** every page renders without error on the Phase 04 benchmark pilot
+  (100 runs) and the Phase 05 HPO pilot (45 runs, 45 test evaluations). Both are PRELIMINARY.
+  Live indicators equal the stored aggregate values.
+- **Validation (local, Windows, Python 3.12, clean venv from a clean worktree at `85c898f`):**
+  - Ruff lint and format PASS; MyPy strict PASS (115 files).
+  - Pytest PASS: 535 tests, 96.63 % branch coverage, no warnings.
+  - Config validation, CI smoke, HPO smoke, report, dashboard launch and claims audit PASS.
+  - Every intermediate commit passes MyPy and Pytest on its own.
+- **Not run locally:**
+  - Python 3.11. The new pins resolve to Python 3.11 Linux wheels in a pip dry run.
+  - GitHub Actions.
+  - Rendering in a real browser.
+- **Known limitation:** the first view of a run with a very large non-dominated set takes seconds
+  (core dominance check, about 4.5 s for a 10 000-evaluation DTLZ2 run); it is cached afterwards.
+- **No final results exist.** The dashboard shows final-stage data once final runs are made
+  (blocked on P3, P4, P5, P8, P9, P10).
+- **Gate:** owner reviews the dashboard before Phase 08 starts.
