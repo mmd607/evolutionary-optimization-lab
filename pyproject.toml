@@ -36,6 +36,14 @@ dependencies = [
     "matplotlib>=3.8,<4",
 ]
 
+[project.optional-dependencies]
+# Read-only Streamlit dashboard over stored artifacts (Phase 07, docs/decisions/0008-*).
+# Not needed to run experiments. Floors are the tested versions (requirements/).
+dashboard = [
+    "streamlit>=1.67,<2",
+    "plotly>=7.2,<8",
+]
+
 [project.scripts]
 evooptlab = "evooptlab.cli:main"
 
@@ -101,7 +109,7 @@ plugins = ["pydantic.mypy"]
 files = ["src", "tests"]
 
 [[tool.mypy.overrides]]
-module = ["pymoo", "pymoo.*", "sklearn", "sklearn.*", "scipy", "scipy.*"]
+module = ["pymoo", "pymoo.*", "sklearn", "sklearn.*", "scipy", "scipy.*", "plotly", "plotly.*"]
 ignore_missing_imports = true
 
 [tool.pydantic-mypy]
