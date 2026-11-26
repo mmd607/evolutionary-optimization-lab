@@ -226,6 +226,17 @@ python -m evooptlab aggregate configs/studies/hpo_pilot.yaml
 Datasets are never committed or redistributed. The leakage controls and their tests are described
 in `docs/decisions/0006-hpo-tasks-and-leakage-controls.md`.
 
+Analysis, generated tables and figures, and the manuscript audit:
+
+```bash
+python -m evooptlab report artifacts/experiments/aggregates/pilot/<aggregate>   # stats, tables, figures, values.json
+python -m evooptlab audit-claims reports/paper/manuscript.md                    # citations, numbers, claim evidence
+python -m evooptlab render-paper reports/paper/manuscript.md --values <values.json> --output <file>
+```
+
+The statistical plan (`configs/analysis_plan.yaml`) is a proposal. Final-stage results are refused
+until it is frozen and committed. See `docs/decisions/0007-analysis-reporting-and-claims-audit.md`.
+
 ## 11. Project status
 
 Progress is tracked per phase in [`docs/phase_status.md`](docs/phase_status.md). Foundation decisions,
