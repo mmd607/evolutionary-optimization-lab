@@ -16,7 +16,7 @@ commit on top of it, so the branch tip is always that SHA plus the status-file c
 | 04 | `phase/04-experiments` | PUBLISHED | `76afce4` | Yes (`14cdd7d` verified 2026-11-25) | Pending |
 | 05 | `phase/05-hyperparameter-optimization` | PUBLISHED | `28b6d51` | Yes (`2a136eb` verified 2026-11-26) | Pending |
 | 06 | `phase/06-analysis-and-paper` | PUBLISHED | `728cd4b` | Yes (`7fd6841` verified 2026-11-26) | Pending |
-| 07 | `phase/07-dashboard` | READY FOR REVIEW | `85c898f` | No | Pending |
+| 07 | `phase/07-dashboard` | PUBLISHED | `85c898f` | Yes (`7c38603` verified 2026-11-26) | Pending |
 | 08 | `phase/08-release-review` | NOT STARTED | — | No | Pending |
 
 ## Phase 00 — Foundation
@@ -202,6 +202,7 @@ commit on top of it, so the branch tip is always that SHA plus the status-file c
 
 ## Phase 07 — Dashboard
 
+- **Published:** `origin/phase/07-dashboard` @ `7c38603` (remote SHA verified 2026-11-26)
 - **Base branch:** `origin/phase/06-analysis-and-paper` @ `449a011` (Phases 03–06 are not yet merged
   to `main`)
 - **Delivered:**
