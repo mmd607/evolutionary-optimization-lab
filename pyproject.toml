@@ -28,7 +28,12 @@ dependencies = [
     # HPO tasks (Phase 05): model family, cross-validation, bundled dataset (docs/decisions/0006-*).
     "scikit-learn>=1.5,<2",
     # Model-based baseline (TPE) behind the ask/tell adapter; tested pin in requirements/.
-    "optuna>=4.0,<6",
+    # >= 5.0: the adapter passes constraints with Trial.set_constraint (added in 5.0).
+    "optuna>=5.0,<6",
+    # Analysis and reporting (Phase 06): statistical tests and generated figures. Both were
+    # already installed through pymoo; they are now imported directly, so they are declared.
+    "scipy>=1.11,<2",
+    "matplotlib>=3.8,<4",
 ]
 
 [project.scripts]
