@@ -262,3 +262,26 @@ def test_report_cli(
     wrong = ["--plan", str(configs_dir / "reporting.yaml"), "--reporting", str(plan_file)]
     assert main(["report", str(aggregate), *wrong]) == 2
     assert "analysis_plan file" in capsys.readouterr().err
+
+
+def test_regenerated_reports_are_byte_identical(
+    aggregate: Path, configs_dir: Path, tmp_path: Path
+) -> None:
+    """Every asset, SVG included, is a pure function of its inputs (reproduction guide §5)."""
+    outputs = [
+        write_report(
+            load_aggregate(aggregate),
+            plan(configs_dir),
+            reporting(configs_dir).model_copy(update={"figure_formats": ["svg", "pdf"]}),
+            tmp_path / name,
+            plan_sha256="0" * 64,
+        )
+        for name in ("first", "second")
+    ]
+    files = [
+        {p.relative_to(o).as_posix(): p.read_bytes() for p in o.rglob("*") if p.is_file()}
+        for o in outputs
+    ]
+    assert files[0].keys() == files[1].keys()
+    assert any(name.endswith(".svg") for name in files[0])
+    assert [n for n in files[0] if files[0][n] != files[1][n]] == []
