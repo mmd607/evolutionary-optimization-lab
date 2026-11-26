@@ -179,7 +179,7 @@ Requires Python 3.11 or 3.12 and pip ≥ 25.1 (for `--group`).
 python -m venv .venv
 # Windows: .venv\Scripts\activate    Linux/macOS: source .venv/bin/activate
 python -m pip install --upgrade "pip>=25.1"
-python -m pip install -c requirements/constraints-py312.txt -e . --group dev
+python -m pip install -c requirements/constraints-py312.txt -e ".[dashboard]" --group dev
 pre-commit install            # optional: run checks on every commit
 ```
 
@@ -236,6 +236,18 @@ python -m evooptlab render-paper reports/paper/manuscript.md --values <values.js
 
 The statistical plan (`configs/analysis_plan.yaml`) is a proposal. Final-stage results are refused
 until it is frozen and committed. See `docs/decisions/0007-analysis-reporting-and-claims-audit.md`.
+
+Read-only dashboard over an artifact root (needs the `dashboard` extra; `make dashboard ROOT=...`):
+
+```bash
+python -m streamlit run dashboard/app.py -- --root artifacts/experiments   # http://localhost:8501
+python dashboard/check_launch.py --root artifacts/experiments               # start, health-check, stop
+```
+
+It shows only stored artifacts: runs, aggregates, `evooptlab report` outputs and stored test
+evaluations. It never writes or runs anything, labels pilot data PRELIMINARY, and warns about
+mixed budgets and stale aggregates. The server binds to `localhost` (`.streamlit/config.toml`). See
+`docs/decisions/0008-read-only-dashboard.md`.
 
 ## 11. Project status
 

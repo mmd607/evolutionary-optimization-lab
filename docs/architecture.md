@@ -156,3 +156,17 @@ rows, scored once on test) `-> diagnose -> aggregate`. The test part is reachabl
 Data flow: `aggregate/ -> evooptlab report -> values.json -> {{value:KEY}} in
 reports/paper/manuscript.md -> evooptlab audit-claims / render-paper`. No result number is typed
 by hand.
+
+## Dashboard (Phase 07)
+
+*Added 2026-11-26. Decisions are recorded in `docs/decisions/0008-read-only-dashboard.md`.*
+
+| Concept | Module | Key API |
+|---|---|---|
+| Artifact index | `explorer/catalog.py` | `scan_artifacts(root)` -> `Catalog` (runs, aggregates, reports, test evaluations, staleness) |
+| Transformations | `explorer/transforms.py` | `comparability`, `run_front`, `convergence_bands`, `trial_rows`, `test_result`, `hpo_run_rows` |
+| Views (outside the package) | `dashboard/evodash/*.py` | one `render()` per page; Plotly figures in `charts.py` |
+| Entry point | `dashboard/app.py` | `streamlit run dashboard/app.py -- --root ROOT` |
+
+`evooptlab.explorer` imports no UI library and only reads files. The Streamlit views call it and
+never compute statistics, aggregates or test results themselves.
