@@ -10,6 +10,8 @@ from evooptlab.config.loader import (
 )
 from evooptlab.config.schemas import (
     PLACEHOLDER_VALUES,
+    AnalysisPlanConfig,
+    AnalysisPlanFile,
     AnyConfig,
     BenchmarksFile,
     BenchmarkSuiteConfig,
@@ -17,6 +19,8 @@ from evooptlab.config.schemas import (
     ExperimentsFile,
     HPOConfig,
     HPOTasksFile,
+    ReportingConfig,
+    ReportingFile,
     StudyConfig,
     StudyFile,
     unresolved_fields,
@@ -24,6 +28,8 @@ from evooptlab.config.schemas import (
 
 __all__ = [
     "PLACEHOLDER_VALUES",
+    "AnalysisPlanConfig",
+    "AnalysisPlanFile",
     "AnyConfig",
     "BenchmarkSuiteConfig",
     "BenchmarksFile",
@@ -32,6 +38,8 @@ __all__ = [
     "ExperimentsFile",
     "HPOConfig",
     "HPOTasksFile",
+    "ReportingConfig",
+    "ReportingFile",
     "StudyConfig",
     "StudyFile",
     "config_hash",

@@ -5,6 +5,7 @@ from __future__ import annotations
 from pathlib import Path
 
 import pytest
+from pydantic import ValidationError
 
 from evooptlab.config import (
     BenchmarksFile,
@@ -150,3 +151,36 @@ class TestConfigHash:
         b = load_config(_write(tmp_path, BENCHMARK_YAML.replace("100", "200"), "b.yaml"))
         assert config_hash(a) != config_hash(b)
         assert len(config_hash(a)) == 64
+
+
+class TestAnalysisPlanAndReporting:
+    def test_shipped_plan_is_a_proposal_and_reporting_loads(self, configs_dir: Path) -> None:
+        from evooptlab.config import AnalysisPlanFile, ReportingFile
+
+        plan = load_config(configs_dir / "analysis_plan.yaml", strict=True)
+        assert isinstance(plan, AnalysisPlanFile)
+        assert plan.analysis_plan.status == "proposal"  # P9 is an owner decision
+        reporting = load_config(configs_dir / "reporting.yaml", strict=True)
+        assert isinstance(reporting, ReportingFile)
+
+    @pytest.mark.parametrize(
+        ("change", "match"),
+        [
+            ({"hpo_metrics": [{"name": "a", "direction": "minimize"}]}, "exactly one hpo"),
+            (
+                {
+                    "benchmark_metrics": [
+                        {"name": "a", "direction": "minimize", "primary": True},
+                        {"name": "a", "direction": "maximize"},
+                    ]
+                },
+                "unique",
+            ),
+        ],
+    )
+    def test_plan_rules(self, configs_dir: Path, change: dict[str, object], match: str) -> None:
+        from evooptlab.config import AnalysisPlanConfig, load_yaml
+
+        data = load_yaml(configs_dir / "analysis_plan.yaml")["analysis_plan"]
+        with pytest.raises(ValidationError, match=match):
+            AnalysisPlanConfig.model_validate({**data, **change})

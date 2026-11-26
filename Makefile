@@ -3,7 +3,7 @@
 PYTHON ?= python
 CONSTRAINTS := requirements/constraints-py312.txt
 
-.PHONY: help install lint format format-check typecheck test coverage validate-configs smoke hpo-smoke data schema check lock
+.PHONY: help install lint format format-check typecheck test coverage validate-configs smoke hpo-smoke data audit schema check lock
 
 help:
 	@echo "install          install package + dev tools with pinned constraints"
@@ -17,6 +17,7 @@ help:
 	@echo "smoke            run the smoke study end-to-end into build/smoke (gitignored)"
 	@echo "hpo-smoke        run the HPO smoke study (bundled data) end-to-end into build/hpo-smoke"
 	@echo "data             download and verify the HPO datasets into data/raw (gitignored)"
+	@echo "audit            audit the manuscript draft (citations, numbers, claim evidence)"
 	@echo "schema           regenerate docs/schemas/run_metadata.schema.json"
 	@echo "check            lint + format-check + typecheck + coverage + validate-configs"
 	@echo "lock             regenerate $(CONSTRAINTS) from the current environment"
@@ -61,10 +62,13 @@ hpo-smoke:
 data:
 	$(PYTHON) -m evooptlab data fetch bank_marketing california_housing wine_quality --data-dir data
 
+audit:
+	$(PYTHON) -m evooptlab audit-claims reports/paper/manuscript.md
+
 schema:
 	$(PYTHON) -m evooptlab schema run-metadata > docs/schemas/run_metadata.schema.json
 
-check: lint format-check typecheck coverage validate-configs
+check: lint format-check typecheck coverage validate-configs audit
 
 lock:
 	@head -n 3 $(CONSTRAINTS) > $(CONSTRAINTS).new

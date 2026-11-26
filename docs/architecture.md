@@ -138,3 +138,21 @@ Data flow: `data fetch -> data/raw/<task>/` (verified) `-> run_study` (data prep
 run; the problem keeps training rows only) `-> test-eval` (selected trial refitted on training
 rows, scored once on test) `-> diagnose -> aggregate`. The test part is reachable only through
 `evaluate_on_test`, which no algorithm or problem calls.
+
+## Analysis and reporting (Phase 06)
+
+*Added 2026-11-26. Decisions are recorded in
+`docs/decisions/0007-analysis-reporting-and-claims-audit.md`.*
+
+| Concept | Module | Key API |
+|---|---|---|
+| Statistics | `analysis/stats.py` | `wilcoxon_paired`, `holm`, `friedman`, `vargha_delaney_a12`, `bootstrap_ci` |
+| Comparison | `analysis/compare.py` | `load_aggregate`, `analyse(data, plan)` (pre-registration guard, pairing check) |
+| Anytime curves | `analysis/curves.py` | `igd_plus_curve` (incremental), `best_so_far_curve` |
+| Tables / figures | `reporting/tables.py`, `reporting/figures.py` | Markdown/LaTeX tables; SVG/PDF figures with their data |
+| Report | `reporting/report.py` | `write_report` -> analysis, tables, figures, `values.json` |
+| Claims audit | `reporting/claims.py` | `audit(manuscript, matrix, literature, values)`, `render` |
+
+Data flow: `aggregate/ -> evooptlab report -> values.json -> {{value:KEY}} in
+reports/paper/manuscript.md -> evooptlab audit-claims / render-paper`. No result number is typed
+by hand.

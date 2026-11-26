@@ -1,0 +1,35 @@
+# Statistical analysis plan (P9), PROPOSAL. ADR 0007.
+#
+# A `proposal` plan may analyse pilot and development aggregates only; every output is labelled
+# PRELIMINARY. Final-stage aggregates are refused until the owner sets `status: frozen` and
+# commits the file *before* final results exist (protocol section 9).
+analysis_plan:
+  name: proposal-v1
+  status: proposal
+  alpha: 0.05
+  benchmark_metrics:
+    - {name: hypervolume_ratio, direction: maximize, primary: true}   # P8 still open
+    - {name: igd_plus, direction: minimize}
+  hpo_metrics:
+    - {name: test_error, direction: minimize, primary: true}
+    - {name: best_validation_error, direction: minimize}
+  per_problem:
+    test: wilcoxon_signed_rank      # paired by replicate: all algorithms share seeds
+    zero_method: wilcox
+    alternative: two-sided
+    effect_size: vargha_delaney_a12
+    correction: holm
+    correction_family: metric       # all pairwise tests of one metric across all problems
+  across_problems:
+    test: friedman                  # on per-problem block summaries
+    block_statistic: median
+    posthoc: wilcoxon_signed_rank_holm
+    min_problems: 5
+  confidence_interval:
+    method: bootstrap_percentile
+    statistic: median
+    level: 0.95
+    n_resamples: 10000
+    seed: 2026
+  min_replicates: 10
+  missing_values: pairwise_complete
