@@ -1,0 +1,31 @@
+claim_id,section,claim,evidence_type,evidence_ref,status
+C01,1;4,One ask/tell interface; one budgeted evaluator; over-budget batches rejected; failed batches count,code,src/evooptlab/core/evaluator.py,supported
+C01,1;4,Budget accounting is tested,test,tests/unit/test_evaluator.py,supported
+C02,5,Paired seeds (common random numbers) and interleaved order; incompatible pairs rejected before running,code,src/evooptlab/experiments/matrix.py,supported
+C02,5,Fairness controls decision record,adr,docs/decisions/0005-experiment-runner-and-fairness-checks.md,supported
+C03,4,Quality policy: feasible non-dominated set; ideal/nadir normalization; 0.1 offset; no feasible point gives no value,code,src/evooptlab/evaluation/quality.py,supported
+C03,4,Quality policy is a proposal (P8),adr,docs/decisions/0003-metrics-normalization-and-reference-points.md,supported
+C04,1,Write-once artifacts; resume never retries a failed run,code,src/evooptlab/experiments/study.py,supported
+C04,1,Resume rules are tested,test,tests/integration/test_study_runner.py,supported
+C05,4,pymoo 0.6.2 adapters with library-default parameters,code,src/evooptlab/algorithms/baselines.py,supported
+C05,4,Defaults equal pymoo defaults (test),test,tests/algorithm_invariants/test_defaults_match_pymoo.py,supported
+C06,4,Optuna TPE behind the ask/tell interface,code,src/evooptlab/algorithms/optuna_tpe.py,supported
+C07,1;4,Search does not depend on test data (leakage tests),test,tests/leakage/test_hpo_leakage.py,supported
+C07,1;4,HPO problem holds training rows only; folds on training part,code,src/evooptlab/hpo/problem.py,supported
+C08,4;5,Dataset checksums verified before use; licences as stated by sources,code,src/evooptlab/hpo/datasets.py,supported
+C08,4;5,Dataset catalogue decision record,adr,docs/decisions/0006-hpo-tasks-and-leakage-controls.md,supported
+C09,4,Selected configuration scored once on test; never recomputed,code,src/evooptlab/experiments/hpo_evaluation.py,supported
+C10,1;4,Analysis plan (proposal) and pre-registration guard for final results,config,configs/analysis_plan.yaml,supported
+C10,1;4,Guard implementation,code,src/evooptlab/analysis/compare.py,supported
+C10,1;4,Claims audit implementation,code,src/evooptlab/reporting/claims.py,supported
+C11,5,Environment recorded with every run,code,src/evooptlab/utils/environment.py,supported
+C12,3,Minimization and g <= 0 conventions,code,src/evooptlab/core/problem.py,supported
+C13,3,Benchmark problems and pilot dimensions,config,configs/studies/pilot_core.yaml,supported
+C14,3,Unit-cube decoding; one trial = one CV = one evaluation; validation error definition,code,src/evooptlab/hpo/search_space.py,supported
+C14,3,Validation error definition,code,src/evooptlab/hpo/problem.py,supported
+C15,9,DTLZ2 reference-front coverage finding (pilot),adr,docs/decisions/0005-experiment-runner-and-fairness-checks.md,supported
+C16,9,HPO wall-clock reflects proposed configurations (pilot finding),adr,docs/decisions/0006-hpo-tasks-and-leakage-controls.md,supported
+R1,6,RQ1 result,value,final-benchmark-study/across/hypervolume_ratio/p_value,pending
+R2,6,RQ2 result,value,sensitivity-study (not designed),pending
+R3,6,RQ3 result,value,final-hpo-study/across/test_error/p_value,pending
+R4,6,RQ4 result,value,final-benchmark-and-hpo-studies,pending
