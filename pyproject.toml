@@ -101,7 +101,7 @@ plugins = ["pydantic.mypy"]
 files = ["src", "tests"]
 
 [[tool.mypy.overrides]]
-module = ["pymoo", "pymoo.*", "sklearn", "sklearn.*"]
+module = ["pymoo", "pymoo.*", "sklearn", "sklearn.*", "scipy", "scipy.*"]
 ignore_missing_imports = true
 
 [tool.pydantic-mypy]
