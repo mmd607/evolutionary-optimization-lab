@@ -36,6 +36,14 @@ dependencies = [
     "matplotlib>=3.8,<4",
 ]
 
+[project.optional-dependencies]
+# Read-only Streamlit dashboard over stored artifacts (Phase 07, docs/decisions/0008-*).
+# Not needed to run experiments. Floors are the tested versions (requirements/).
+dashboard = [
+    "streamlit>=1.67,<2",
+    "plotly>=7.2,<8",
+]
+
 [project.scripts]
 evooptlab = "evooptlab.cli:main"
 
@@ -64,7 +72,7 @@ packages = ["src/evooptlab"]
 [tool.ruff]
 line-length = 100
 target-version = "py311"
-src = ["src", "tests"]
+src = ["src", "tests", "dashboard"]
 extend-exclude = ["notebooks"]
 
 [tool.ruff.lint]
@@ -98,10 +106,10 @@ python_version = "3.11"
 strict = true
 warn_unreachable = true
 plugins = ["pydantic.mypy"]
-files = ["src", "tests"]
+files = ["src", "tests", "dashboard"]
 
 [[tool.mypy.overrides]]
-module = ["pymoo", "pymoo.*", "sklearn", "sklearn.*", "scipy", "scipy.*"]
+module = ["pymoo", "pymoo.*", "sklearn", "sklearn.*", "scipy", "scipy.*", "plotly", "plotly.*"]
 ignore_missing_imports = true
 
 [tool.pydantic-mypy]
@@ -115,7 +123,7 @@ warn_required_dynamic_aliases = true
 [tool.pytest.ini_options]
 minversion = "8.0"
 testpaths = ["tests"]
-pythonpath = ["tests"]
+pythonpath = ["tests", "dashboard"]
 addopts = ["-ra", "--strict-markers", "--strict-config", "--import-mode=importlib"]
 markers = [
     "integration: multi-component tests (still small and offline)",
@@ -124,7 +132,7 @@ markers = [
 filterwarnings = ["error"]
 
 [tool.coverage.run]
-source = ["evooptlab"]
+source = ["evooptlab", "evodash"]
 branch = true
 
 [tool.coverage.report]

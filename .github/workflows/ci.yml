@@ -40,7 +40,7 @@ jobs:
       - name: Install
         run: |
           python -m pip install --upgrade "pip>=25.1"
-          python -m pip install -c requirements/constraints-py312.txt -e . --group test --group lint
+          python -m pip install -c requirements/constraints-py312.txt -e ".[dashboard]" --group test --group lint
 
       - name: Ruff lint
         run: python -m ruff check . --output-format=github
@@ -77,7 +77,8 @@ jobs:
           python -m evooptlab test-eval configs/studies/hpo_smoke.yaml --root "$root"
           python -m evooptlab diagnose configs/studies/hpo_smoke.yaml --root "$root"
           python -m evooptlab aggregate configs/studies/hpo_smoke.yaml --root "$root"
-          python -m evooptlab report "$(ls -d "$root"/aggregates/pilot/*)" --output "$root/report"
+          python -m evooptlab report "$(ls -d "$root"/aggregates/pilot/*)"
+          python dashboard/check_launch.py --root "$root"
 
       - name: Claims audit of the manuscript draft
         run: python -m evooptlab audit-claims reports/paper/manuscript.md

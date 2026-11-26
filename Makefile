@@ -3,7 +3,7 @@
 PYTHON ?= python
 CONSTRAINTS := requirements/constraints-py312.txt
 
-.PHONY: help install lint format format-check typecheck test coverage validate-configs smoke hpo-smoke data audit schema check lock
+.PHONY: help install lint format format-check typecheck test coverage validate-configs smoke hpo-smoke data audit dashboard dashboard-check schema check lock
 
 help:
 	@echo "install          install package + dev tools with pinned constraints"
@@ -18,13 +18,15 @@ help:
 	@echo "hpo-smoke        run the HPO smoke study (bundled data) end-to-end into build/hpo-smoke"
 	@echo "data             download and verify the HPO datasets into data/raw (gitignored)"
 	@echo "audit            audit the manuscript draft (citations, numbers, claim evidence)"
+	@echo "dashboard        read-only dashboard over ROOT (default build/smoke) on localhost"
+	@echo "dashboard-check  start the dashboard on ROOT, check it is healthy, stop it"
 	@echo "schema           regenerate docs/schemas/run_metadata.schema.json"
 	@echo "check            lint + format-check + typecheck + coverage + validate-configs"
 	@echo "lock             regenerate $(CONSTRAINTS) from the current environment"
 
 install:
 	$(PYTHON) -m pip install --upgrade "pip>=25.1"
-	$(PYTHON) -m pip install -c $(CONSTRAINTS) -e . --group dev
+	$(PYTHON) -m pip install -c $(CONSTRAINTS) -e ".[dashboard]" --group dev
 
 lint:
 	$(PYTHON) -m ruff check .
@@ -64,6 +66,14 @@ data:
 
 audit:
 	$(PYTHON) -m evooptlab audit-claims reports/paper/manuscript.md
+
+ROOT ?= build/smoke
+
+dashboard:
+	$(PYTHON) -m streamlit run dashboard/app.py -- --root $(ROOT)
+
+dashboard-check:
+	$(PYTHON) dashboard/check_launch.py --root $(ROOT)
 
 schema:
 	$(PYTHON) -m evooptlab schema run-metadata > docs/schemas/run_metadata.schema.json
