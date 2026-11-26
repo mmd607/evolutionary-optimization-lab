@@ -14,7 +14,7 @@ commit on top of it, so the branch tip is always that SHA plus the status-file c
 | 02 | `phase/02-benchmarks` | PUBLISHED | `1ce9e6b` | Yes (`ae172f6` verified 2026-11-24) | Pending |
 | 03 | `phase/03-algorithms` | PUBLISHED | `40dcf42` | Yes (`40dcf42` verified 2026-11-25) | Pending |
 | 04 | `phase/04-experiments` | PUBLISHED | `76afce4` | Yes (`14cdd7d` verified 2026-11-25) | Pending |
-| 05 | `phase/05-hyperparameter-optimization` | READY FOR REVIEW | `28b6d51` | No | Pending |
+| 05 | `phase/05-hyperparameter-optimization` | PUBLISHED | `28b6d51` | Yes (`2a136eb` verified 2026-11-26) | Pending |
 | 06 | `phase/06-analysis-and-paper` | NOT STARTED | — | No | Pending |
 | 07 | `phase/07-dashboard` | NOT STARTED | — | No | Pending |
 | 08 | `phase/08-release-review` | NOT STARTED | — | No | Pending |
@@ -112,6 +112,8 @@ commit on top of it, so the branch tip is always that SHA plus the status-file c
 
 ## Phase 05 — Hyperparameter optimization
 
+- **Published:** `origin/phase/05-hyperparameter-optimization` @ `2a136eb` (remote SHA verified
+  2026-11-26)
 - **Base branch:** `origin/phase/04-experiments` @ `c5abe4d` (Phase 03 and 04 are not yet merged
   to `main`)
 - **Delivered:**
