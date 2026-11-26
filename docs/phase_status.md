@@ -17,7 +17,7 @@ commit on top of it, so the branch tip is always that SHA plus the status-file c
 | 05 | `phase/05-hyperparameter-optimization` | PUBLISHED | `28b6d51` | Yes (`2a136eb` verified 2026-11-26) | Pending |
 | 06 | `phase/06-analysis-and-paper` | PUBLISHED | `728cd4b` | Yes (`7fd6841` verified 2026-11-26) | Pending |
 | 07 | `phase/07-dashboard` | PUBLISHED | `85c898f` | Yes (`7c38603` verified 2026-11-26) | Pending |
-| 08 | `phase/08-release-review` | READY FOR REVIEW | `63a13d6` | No | Pending |
+| 08 | `phase/08-release-review` | PUBLISHED | `63a13d6` | Yes (`b83d9bd` verified 2026-11-26) | Pending |
 
 ## Phase 00 — Foundation
 
@@ -244,6 +244,8 @@ commit on top of it, so the branch tip is always that SHA plus the status-file c
 
 ## Phase 08 — Release review
 
+- **Published:** `origin/phase/08-release-review` @ `b83d9bd` (remote SHA verified
+  2026-11-26)
 - **Base branch:** `origin/phase/07-dashboard` @ `dd64d90` (Phases 02–07 are not yet merged to
   `main`)
 - **Review:** `docs/decisions/0009-release-review.md` gives every checklist item with the
