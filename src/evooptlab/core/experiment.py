@@ -255,20 +255,24 @@ class ExperimentRunner:
         study resume uses to decide whether a cell has already been run.
         """
         p = problem.spec
+        problem_document: dict[str, Any] = {
+            "name": p.name,
+            "n_variables": p.n_variables,
+            "n_objectives": p.n_objectives,
+            "n_constraints": p.n_constraints,
+            "lower_bounds": p.lower_bounds.tolist(),
+            "upper_bounds": p.upper_bounds.tolist(),
+        }
+        details = problem.describe()
+        if details:
+            problem_document["details"] = details
         return {
             "stage": spec.stage,
             "seed": spec.seed,
             "seed_streams": {ALGORITHM_STREAM: derive_seed(spec.seed, ALGORITHM_STREAM)},
             "budget": {"unit": "objective_evaluations", "max_evaluations": spec.budget},
             "timeout_seconds": spec.timeout_seconds,
-            "problem": {
-                "name": p.name,
-                "n_variables": p.n_variables,
-                "n_objectives": p.n_objectives,
-                "n_constraints": p.n_constraints,
-                "lower_bounds": p.lower_bounds.tolist(),
-                "upper_bounds": p.upper_bounds.tolist(),
-            },
+            "problem": problem_document,
             "algorithm": {"name": algorithm.name, "parameters": algorithm.parameters()},
             "extra": dict(spec.extra_config),
         }

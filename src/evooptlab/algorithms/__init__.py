@@ -8,11 +8,12 @@ from __future__ import annotations
 from typing import Any
 
 from evooptlab.algorithms.baselines import CMOPSO, DE, GA, GDE3, NSGA2, PSO
+from evooptlab.algorithms.optuna_tpe import OptunaTPE
 from evooptlab.algorithms.random_search import RandomSearch
 from evooptlab.core.algorithm import Algorithm
 
 ALGORITHMS: dict[str, type[Algorithm]] = {
-    cls.name: cls for cls in (RandomSearch, GA, DE, PSO, NSGA2, GDE3, CMOPSO)
+    cls.name: cls for cls in (RandomSearch, GA, DE, PSO, NSGA2, GDE3, CMOPSO, OptunaTPE)
 }
 
 
@@ -33,6 +34,7 @@ __all__ = [
     "GDE3",
     "NSGA2",
     "PSO",
+    "OptunaTPE",
     "RandomSearch",
     "get_algorithm",
 ]

@@ -19,6 +19,14 @@ Commands
     Integrity, fairness and timing checks of a study's stored runs. Exit code 1 on any FAIL.
 ``evooptlab aggregate STUDY [--output DIR]``
     Write per-run and per-cell tables and a manifest. Refuses if diagnostics fail.
+``evooptlab test-eval STUDY [--data-dir DIR]``
+    HPO studies: score each completed run's validation-selected configuration once on the
+    held-out test part. Existing evaluations are never recomputed.
+``evooptlab data fetch TASK [TASK ...] [--data-dir DIR]``
+    Download HPO datasets into the cache and verify their checksums (cached files are
+    re-verified, never downloaded again).
+``evooptlab data info [TASK ...] [--data-dir DIR]``
+    Print dataset provenance (source, licence, citation, checksum) and cache status as JSON.
 
 Study commands load configs strictly, and read and write artifacts under the study's
 ``output_dir`` unless ``--root`` is given. They exit with code 2 on a config or study error.
@@ -48,6 +56,7 @@ from evooptlab.experiments import (
     collect_study,
     default_output_dir,
     diagnose,
+    evaluate_study_on_test,
     matrix_summary,
     projected_seconds,
     run_study,
@@ -114,6 +123,20 @@ def _build_parser() -> argparse.ArgumentParser:
     diag.add_argument("--project-replicates", type=int, default=None, metavar="N")
     agg = study_command("aggregate", "write result tables for a study")
     agg.add_argument("--output", type=Path, default=None, help="new output directory")
+    test_eval = study_command("test-eval", "score selected HPO configurations on test data")
+    for command in (run, test_eval):
+        command.add_argument(
+            "--data-dir", type=Path, default=None, help="dataset cache (default: study data_dir)"
+        )
+
+    data = sub.add_parser("data", help="HPO dataset cache and provenance")
+    data_sub = data.add_subparsers(dest="data_command", required=True)
+    fetch = data_sub.add_parser("fetch", help="download and verify datasets")
+    fetch.add_argument("tasks", nargs="+", metavar="TASK")
+    info = data_sub.add_parser("info", help="print provenance and cache status")
+    info.add_argument("tasks", nargs="*", metavar="TASK")
+    for command in (fetch, info):
+        command.add_argument("--data-dir", type=Path, default=Path("data"), help="cache root")
     return parser
 
 
@@ -158,7 +181,12 @@ def _cmd_run(study: StudyConfig, layout: ArtifactLayout, args: argparse.Namespac
         print(f"[{position}/{total}] {name}: {status}", flush=True)
 
     report = run_study(
-        study, layout, resume=args.resume, lock_file=args.lock_file, progress=progress
+        study,
+        layout,
+        resume=args.resume,
+        lock_file=args.lock_file,
+        progress=progress,
+        data_dir=args.data_dir,
     )
     print(
         f"executed {len(report.executed)}, skipped {len(report.skipped)}, "
@@ -210,6 +238,41 @@ def _cmd_aggregate(study: StudyConfig, layout: ArtifactLayout, output: Path | No
     return 0
 
 
+def _cmd_test_eval(study: StudyConfig, layout: ArtifactLayout, data_dir: Path | None) -> int:
+    report = evaluate_study_on_test(collect_study(study, layout, data_dir), layout)
+    print(
+        f"evaluated {len(report.evaluated)}, already evaluated {len(report.skipped)}, "
+        f"without a successful trial {len(report.no_successful_trial)}"
+    )
+    return 0
+
+
+def _cmd_data(args: argparse.Namespace) -> int:
+    from evooptlab.hpo import datasets
+
+    try:
+        if args.data_command == "fetch":
+            for name in args.tasks:
+                path = datasets.fetch(name, args.data_dir)
+                where = "bundled with scikit-learn" if path is None else str(path)
+                print(f"OK    {name}: {where}")
+            return 0
+        names = args.tasks or list(datasets.CATALOG)
+        records = []
+        for name in names:
+            task = datasets.get_task(name)
+            record = task.provenance()
+            path = datasets.raw_path(task, args.data_dir)
+            record["cache_path"] = None if path is None else str(path)
+            record["cached"] = None if path is None else path.exists()
+            records.append(record)
+        print(json.dumps(records, indent=2))
+        return 0
+    except (datasets.DatasetError, OSError) as exc:
+        print(f"error: {exc}", file=sys.stderr)
+        return 2
+
+
 def _cmd_study(args: argparse.Namespace) -> int:
     try:
         study, layout = _load_study(args.study, args.root)
@@ -219,6 +282,8 @@ def _cmd_study(args: argparse.Namespace) -> int:
             return _cmd_run(study, layout, args)
         if args.command == "diagnose":
             return _cmd_diagnose(study, layout, args)
+        if args.command == "test-eval":
+            return _cmd_test_eval(study, layout, args.data_dir)
         return _cmd_aggregate(study, layout, args.output)
     except (ConfigError, StudyError, FileExistsError) as exc:
         print(f"error: {exc}", file=sys.stderr)
@@ -242,6 +307,8 @@ def main(argv: Sequence[str] | None = None) -> int:
     if args.command == "schema":
         print(json.dumps(RunMetadata.model_json_schema(), indent=2))
         return 0
-    if args.command in {"plan", "run", "diagnose", "aggregate"}:
+    if args.command in {"plan", "run", "diagnose", "aggregate", "test-eval"}:
         return _cmd_study(args)
+    if args.command == "data":
+        return _cmd_data(args)
     parser.error(f"unknown command {args.command!r}")  # pragma: no cover - argparse guards this

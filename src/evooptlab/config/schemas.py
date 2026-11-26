@@ -214,26 +214,134 @@ class StudyAlgorithmConfig(_StrictModel):
     parameters: dict[str, ParameterValue] = Field(default_factory=dict)
 
 
+ChoiceValue: TypeAlias = bool | int | float | str
+
+
+class SearchParameterConfig(_StrictModel):
+    """One hyperparameter of an HPO search space (ADR 0006).
+
+    Every algorithm searches the same unit cube; ``float`` and ``int`` map a coordinate linearly
+    or, with ``log: true``, log-uniformly onto ``[low, high]``; ``categorical`` splits it into
+    equal-width bins, one per choice.
+    """
+
+    type: Literal["float", "int", "categorical"]
+    low: float | None = None
+    high: float | None = None
+    log: bool = False
+    choices: list[ChoiceValue] | None = None
+
+    @model_validator(mode="after")
+    def _consistent(self) -> SearchParameterConfig:
+        if self.type == "categorical":
+            if self.low is not None or self.high is not None or self.log:
+                raise ValueError("categorical parameters take only 'choices'")
+            if not self.choices or len(self.choices) < 2:
+                raise ValueError("categorical parameters need at least two choices")
+            if len({repr(c) for c in self.choices}) != len(self.choices):
+                raise ValueError("categorical choices must be unique")
+            return self
+        if self.choices is not None:
+            raise ValueError(f"{self.type} parameters take 'low'/'high', not 'choices'")
+        if self.low is None or self.high is None or not self.low < self.high:
+            raise ValueError(f"{self.type} parameters need low < high")
+        if self.log and self.low <= 0:
+            raise ValueError("log-scaled parameters need low > 0")
+        if self.type == "int" and not (self.low.is_integer() and self.high.is_integer()):
+            raise ValueError("int parameters need integral low and high")
+        return self
+
+
+class HPOSplitStudyConfig(_StrictModel):
+    """Train/test split of an HPO problem. The test part is never visible to the optimizer.
+
+    ``stratified``/``random`` draw the test rows with ``random_seed``; ``ordered`` keeps the
+    file order and holds out the last ``test_fraction`` of rows (for time-ordered sources).
+    """
+
+    strategy: Literal["stratified", "random", "ordered"]
+    test_fraction: Annotated[float, Field(gt=0.0, lt=1.0)]
+    random_seed: NonNegativeInt
+
+
+class CVConfig(_StrictModel):
+    """Cross-validation on the training part only; one trial = one full CV = one evaluation."""
+
+    strategy: Literal["stratified_kfold", "kfold"]
+    n_splits: Annotated[int, Field(ge=2)]
+    random_seed: NonNegativeInt
+
+
+HPOObjective: TypeAlias = Literal["validation_error", "fit_seconds"]
+
+
+class HPOProblemConfig(_StrictModel):
+    """A hyperparameter-optimization problem built from a catalogued tabular task (ADR 0006)."""
+
+    name: Identifier
+    task: Identifier
+    variant: Identifier | None = None
+    task_type: Literal["classification", "regression"]
+    target_metric: Literal["f1_macro", "neg_root_mean_squared_error"]
+    objectives: Annotated[list[HPOObjective], Field(min_length=1)]
+    model: Literal["hist_gradient_boosting"]
+    model_seed: NonNegativeInt
+    fixed_parameters: dict[str, ParameterValue] = Field(default_factory=dict)
+    search_space: Annotated[dict[str, SearchParameterConfig], Field(min_length=1)]
+    split: HPOSplitStudyConfig
+    cv: CVConfig
+
+    @model_validator(mode="after")
+    def _consistent(self) -> HPOProblemConfig:
+        if self.objectives[0] != "validation_error" or len(set(self.objectives)) != len(
+            self.objectives
+        ):
+            raise ValueError("objectives must start with 'validation_error' and be unique")
+        expected = (
+            "f1_macro" if self.task_type == "classification" else "neg_root_mean_squared_error"
+        )
+        if self.target_metric != expected:
+            raise ValueError(f"{self.task_type} tasks use target_metric {expected!r}")
+        if self.task_type == "regression" and (
+            self.split.strategy == "stratified" or self.cv.strategy == "stratified_kfold"
+        ):
+            raise ValueError("stratified split or CV needs a classification task")
+        overlap = set(self.fixed_parameters) & set(self.search_space)
+        if overlap:
+            raise ValueError(f"parameters both fixed and searched: {sorted(overlap)}")
+        return self
+
+
+StudyProblemConfig: TypeAlias = BenchmarkProblemConfig | HPOProblemConfig
+
+
 class StudyConfig(_StrictModel):
     """A full experiment matrix: problems x algorithms x seeds at one budget and stage."""
 
     name: Identifier
     stage: StudyStage
     output_dir: Annotated[str, Field(min_length=1)]
-    problems: Annotated[list[BenchmarkProblemConfig], Field(min_length=1)]
+    problems: Annotated[list[StudyProblemConfig], Field(min_length=1)]
     algorithms: Annotated[list[StudyAlgorithmConfig], Field(min_length=1)]
     budget: BudgetConfig
     seeds: SeedPolicy
     timeout_seconds: PositiveInt | None = None
+    #: Where HPO datasets are cached (``<data_dir>/raw/<task>/``). Machine-specific, so it is not
+    #: part of any run's config hash; the dataset checksum is.
+    data_dir: Annotated[str, Field(min_length=1)] = "data"
+
+    @property
+    def is_hpo(self) -> bool:
+        return isinstance(self.problems[0], HPOProblemConfig)
 
     @field_validator("problems")
     @classmethod
-    def _problem_names_unique(
-        cls, problems: list[BenchmarkProblemConfig]
-    ) -> list[BenchmarkProblemConfig]:
+    def _problem_names_unique(cls, problems: list[StudyProblemConfig]) -> list[StudyProblemConfig]:
         names = [p.name for p in problems]
         if len(set(names)) != len(names):
             raise ValueError("study problem names must be unique")
+        if len({type(p) for p in problems}) > 1:
+            raise ValueError("a study is either all benchmark problems or all HPO problems")
         return problems
 
     @field_validator("algorithms")

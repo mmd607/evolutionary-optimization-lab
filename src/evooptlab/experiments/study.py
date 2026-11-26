@@ -26,6 +26,7 @@ from pathlib import Path
 
 from evooptlab.config.schemas import StudyConfig
 from evooptlab.core.experiment import ExperimentRunner
+from evooptlab.core.problem import Problem
 from evooptlab.experiments.matrix import (
     CellKey,
     RunCell,
@@ -81,6 +82,25 @@ def _require_clean_commit(repo_root: Path | None) -> None:
         )
 
 
+def _prepare_problems(cells: list[RunCell]) -> dict[str, Problem]:
+    """Load and verify the data of every HPO problem that still has cells to run."""
+    from evooptlab.hpo.datasets import DatasetError
+    from evooptlab.hpo.problem import HPOProblem
+
+    prepared: dict[str, Problem] = {}
+    for cell in cells:
+        if cell.problem.name in prepared:
+            continue
+        problem = cell.build_problem()
+        if isinstance(problem, HPOProblem):
+            try:
+                problem.prepare()
+            except DatasetError as exc:
+                raise StudyError(f"problem {cell.problem.name}: {exc}") from exc
+            prepared[cell.problem.name] = problem
+    return prepared
+
+
 def run_study(
     study: StudyConfig,
     layout: ArtifactLayout,
@@ -89,9 +109,15 @@ def run_study(
     repo_root: Path | None = None,
     lock_file: Path | None = None,
     progress: Progress | None = None,
+    data_dir: Path | None = None,
 ) -> StudyRunReport:
-    """Run every planned cell of ``study`` that is not already settled."""
-    cells = build_matrix(study)
+    """Run every planned cell of ``study`` that is not already settled.
+
+    HPO problems are prepared (data loaded, verified and split) once, before any run starts, so
+    a missing or corrupted dataset stops the study instead of being recorded as failed runs,
+    which resume would then (correctly) refuse to repeat.
+    """
+    cells = build_matrix(study, data_dir)
     if study.stage == "final":
         _require_clean_commit(repo_root)
     index = index_by_hash(scan_stage(layout, study.stage).records)
@@ -104,6 +130,11 @@ def run_study(
             f"under {layout.stage_dir(study.stage)}; pass resume to continue it"
         )
 
+    pending = [
+        c for c, h in zip(cells, hashes, strict=True) if finished_record(index.get(h, [])) is None
+    ]
+    prepared = _prepare_problems(pending)
+
     runner = ExperimentRunner(layout, repo_root=repo_root, lock_file=lock_file)
     report = StudyRunReport()
     for position, (cell, cell_hash) in enumerate(zip(cells, hashes, strict=True), start=1):
@@ -113,7 +144,8 @@ def run_study(
             if progress:
                 progress(position, len(cells), cell, f"skipped ({settled.metadata.outcome})")
             continue
-        result = runner.run(cell.build_problem(), cell.build_algorithm(), run_spec(study, cell))
+        problem = prepared.get(cell.problem.name) or cell.build_problem()
+        result = runner.run(problem, cell.build_algorithm(), run_spec(study, cell))
         if result.metadata.config_hash != cell_hash:  # pragma: no cover - internal invariant
             raise StudyError(f"run {result.run_id} hash does not match its planned cell")
         report.executed.append((cell.key, result.run_id, result.outcome))

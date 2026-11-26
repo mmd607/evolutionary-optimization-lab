@@ -116,3 +116,25 @@ Deviation from the module list above: `config/` (Phase 00) holds the validated `
 Data flow: `StudyConfig -> build_matrix -> run_study -> artifacts/experiments/<stage>/<run_id>/`
 `-> collect_study -> diagnose -> write_aggregate -> artifacts/experiments/aggregates/<stage>/...`.
 Analysis reads only stored artifacts, never in-memory run state.
+
+## HPO tasks (Phase 05)
+
+*Added 2026-11-25. Decisions and leakage controls are recorded in
+`docs/decisions/0006-hpo-tasks-and-leakage-controls.md`.* The `HPOObjective` concept above is
+implemented as an ordinary `Problem`, so HPO runs reuse the runner, studies, resume, diagnostics
+and aggregation unchanged.
+
+| Concept | Module | Key API |
+|---|---|---|
+| Datasets | `hpo/datasets.py` | `CATALOG` (provenance, licence, checksum), `fetch` (verified download), `load` (verified parse) |
+| Search space | `hpo/search_space.py` | `SearchSpace.decode(u)`: unit cube -> hyperparameters (float/int/categorical, log) |
+| Model family | `hpo/models.py` | `build_model`: preprocessing + estimator pipeline, fitted per training fold |
+| HPO problem | `hpo/problem.py` | `HPOProblem` (CV error on training rows only), `select_trial`, `evaluate_on_test` |
+| Model-based baseline | `algorithms/optuna_tpe.py` | `OptunaTPE` (`optuna_tpe`): Optuna TPE behind ask/tell |
+| Test evaluation | `experiments/hpo_evaluation.py` | `evaluate_study_on_test` -> `<root>/test_evaluations/<stage>/<run_id>.json` (write-once) |
+| CLI | `cli.py` | `evooptlab data fetch / info`, `evooptlab test-eval STUDY` |
+
+Data flow: `data fetch -> data/raw/<task>/` (verified) `-> run_study` (data prepared before any
+run; the problem keeps training rows only) `-> test-eval` (selected trial refitted on training
+rows, scored once on test) `-> diagnose -> aggregate`. The test part is reachable only through
+`evaluate_on_test`, which no algorithm or problem calls.

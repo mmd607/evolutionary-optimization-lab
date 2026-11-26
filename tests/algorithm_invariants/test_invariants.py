@@ -27,8 +27,8 @@ from evooptlab.storage import ArtifactLayout
 pytestmark = pytest.mark.integration
 
 BUDGET = 237  # deliberately not a multiple of any default population size
-SO = ["random_search", "ga", "de", "pso"]
-MO = ["random_search", "nsga2", "gde3", "cmopso"]
+SO = ["random_search", "ga", "de", "pso", "optuna_tpe"]
+MO = ["random_search", "nsga2", "gde3", "cmopso", "optuna_tpe"]
 SMOKE: list[tuple[str, str]] = [(n, "so") for n in SO] + [(n, "mo") for n in MO]
 
 
@@ -124,7 +124,7 @@ def test_multi_objective_algorithms_reject_single_objective(
         _run(runner, name, Sphere(2))
 
 
-@pytest.mark.parametrize("name", ["random_search", "ga", "de", "pso"])
+@pytest.mark.parametrize("name", ["random_search", "ga", "de", "pso", "optuna_tpe"])
 def test_constrained_problem_runs(runner: ExperimentRunner, name: str) -> None:
     result = _run(runner, name, ConstrainedSphere(3), budget=300)
     assert result.outcome == "completed", result.metadata.failure_reason

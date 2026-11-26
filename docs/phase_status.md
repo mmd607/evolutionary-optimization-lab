@@ -14,7 +14,7 @@ commit on top of it, so the branch tip is always that SHA plus the status-file c
 | 02 | `phase/02-benchmarks` | PUBLISHED | `1ce9e6b` | Yes (`ae172f6` verified 2026-11-24) | Pending |
 | 03 | `phase/03-algorithms` | PUBLISHED | `40dcf42` | Yes (`40dcf42` verified 2026-11-25) | Pending |
 | 04 | `phase/04-experiments` | PUBLISHED | `76afce4` | Yes (`14cdd7d` verified 2026-11-25) | Pending |
-| 05 | `phase/05-hyperparameter-optimization` | NOT STARTED | — | No | Pending |
+| 05 | `phase/05-hyperparameter-optimization` | PUBLISHED | `28b6d51` | Yes (`2a136eb` verified 2026-11-26) | Pending |
 | 06 | `phase/06-analysis-and-paper` | NOT STARTED | — | No | Pending |
 | 07 | `phase/07-dashboard` | NOT STARTED | — | No | Pending |
 | 08 | `phase/08-release-review` | NOT STARTED | — | No | Pending |
@@ -109,3 +109,46 @@ commit on top of it, so the branch tip is always that SHA plus the status-file c
   P6 (seed policy), P7, P8 (plus the reference-front finding), P10; and whether
   `experiments.yaml` placeholders should be replaced.
 - **Gate:** owner reviews the pilot diagnostics before Phase 05 starts.
+
+## Phase 05 — Hyperparameter optimization
+
+- **Published:** `origin/phase/05-hyperparameter-optimization` @ `2a136eb` (remote SHA verified
+  2026-11-26)
+- **Base branch:** `origin/phase/04-experiments` @ `c5abe4d` (Phase 03 and 04 are not yet merged
+  to `main`)
+- **Delivered:**
+  - A dataset catalogue with provenance and licences, and verified downloads (`evooptlab data
+    fetch / info`, SHA-256 and size checked before writing; data are never committed).
+  - Leakage-safe HPO problems: unit-cube search space, HistGradientBoosting pipeline,
+    cross-validation on training rows only, failed trials recorded as infeasible.
+  - The Optuna TPE baseline (`optuna_tpe`).
+  - A one-time held-out test evaluation (`evooptlab test-eval`, write-once).
+  - HPO diagnostics (`failed_trials`, `test_evaluations`) and aggregation.
+  - HPO smoke and pilot studies, and an HPO smoke step in CI.
+  - Docs: `docs/decisions/0006-hpo-tasks-and-leakage-controls.md`.
+- **Gate (leakage tests):** `tests/leakage/test_hpo_leakage.py` PASS. Changing test labels or
+  features leaves every search objective bit-identical, encoders never see validation or test
+  rows, and the split does not depend on the run seed or algorithm.
+- **Core change:** `Problem.describe()` adds `problem.details` to the run config hash. Benchmark
+  config hashes are unchanged, pinned by a regression test.
+- **Pilot (`hpo_pilot`, PRELIMINARY, local Windows CPU, clean worktree at `3a58ab7`):**
+  - 45/45 runs completed, 0 failed trials, 45 test evaluations, all 11 diagnostics PASS.
+  - 85 min run time and 52 s of test evaluation.
+  - The projection for 100 trials × 10 seeds is about 8.6 h sequential, likely more (ADR 0006).
+  - Bank marketing has 644/8 238 test rows that duplicate training feature rows (P4).
+  - Artifacts are kept outside the repository and were not committed.
+- **Validation (local, Windows, Python 3.12, clean venv from a clean worktree):** Ruff lint PASS
+  · Ruff format PASS · MyPy strict PASS (79 files) · Pytest PASS (470 tests, 98.73 % branch
+  coverage) · config validation PASS (7 files) · CI smoke and HPO smoke steps PASS · every
+  intermediate commit passes MyPy and Pytest on its own.
+- **Not run locally:** Python 3.11 (CI matrix).
+- **Not implemented:** per-trial timeouts, parallel trials, and multi-objective HPO quality
+  indicators (ADR 0006).
+- **Needs owner decision:**
+  - P3: Wine Quality.
+  - P4: split strategies, including the temporal split and deduplication for bank marketing.
+  - P5: trial budget and seeds (the protocol asks for at least 10 HPO seeds).
+  - P10: model family, search space and population sizes.
+  - Whether `fit_seconds` becomes a second objective.
+  - P11: branch naming (this branch follows the workflow instructions).
+- **Gate:** owner reviews the leakage controls and pilot diagnostics before Phase 06 starts.

@@ -3,7 +3,7 @@
 PYTHON ?= python
 CONSTRAINTS := requirements/constraints-py312.txt
 
-.PHONY: help install lint format format-check typecheck test coverage validate-configs smoke schema check lock
+.PHONY: help install lint format format-check typecheck test coverage validate-configs smoke hpo-smoke data schema check lock
 
 help:
 	@echo "install          install package + dev tools with pinned constraints"
@@ -15,6 +15,8 @@ help:
 	@echo "coverage         pytest with coverage report"
 	@echo "validate-configs validate configs/*.yaml and configs/studies/*.yaml"
 	@echo "smoke            run the smoke study end-to-end into build/smoke (gitignored)"
+	@echo "hpo-smoke        run the HPO smoke study (bundled data) end-to-end into build/hpo-smoke"
+	@echo "data             download and verify the HPO datasets into data/raw (gitignored)"
 	@echo "schema           regenerate docs/schemas/run_metadata.schema.json"
 	@echo "check            lint + format-check + typecheck + coverage + validate-configs"
 	@echo "lock             regenerate $(CONSTRAINTS) from the current environment"
@@ -49,6 +51,15 @@ smoke:
 	$(PYTHON) -m evooptlab run configs/studies/smoke.yaml --root build/smoke --resume
 	$(PYTHON) -m evooptlab diagnose configs/studies/smoke.yaml --root build/smoke
 	$(PYTHON) -m evooptlab aggregate configs/studies/smoke.yaml --root build/smoke
+
+hpo-smoke:
+	$(PYTHON) -m evooptlab run configs/studies/hpo_smoke.yaml --root build/hpo-smoke --resume
+	$(PYTHON) -m evooptlab test-eval configs/studies/hpo_smoke.yaml --root build/hpo-smoke
+	$(PYTHON) -m evooptlab diagnose configs/studies/hpo_smoke.yaml --root build/hpo-smoke
+	$(PYTHON) -m evooptlab aggregate configs/studies/hpo_smoke.yaml --root build/hpo-smoke
+
+data:
+	$(PYTHON) -m evooptlab data fetch bank_marketing california_housing wine_quality --data-dir data
 
 schema:
 	$(PYTHON) -m evooptlab schema run-metadata > docs/schemas/run_metadata.schema.json

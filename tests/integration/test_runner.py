@@ -234,3 +234,38 @@ class TestRunSpecValidation:
         args.update(kw)
         with pytest.raises(ValueError):
             RunSpec(**args)
+
+
+def test_benchmark_config_hash_is_unchanged_by_the_details_hook() -> None:
+    """Analytic benchmarks describe nothing extra, so existing study cells keep their hashes.
+
+    The expected value was computed with the pre-Phase-05 ``config_document``.
+    """
+    from evooptlab.algorithms import get_algorithm
+    from evooptlab.benchmarks import ZDT1
+
+    spec = RunSpec("pilot", seed=11, budget=500, extra_config={"study": "x", "replicate": 0})
+    document = ExperimentRunner.config_document(ZDT1(30), get_algorithm("nsga2"), spec)
+    assert "details" not in document["problem"]
+    assert canonical_hash(document) == (
+        "4b3ee3d6a5ca16d1cfbb91aa30f3aa3be6b79e3969564bd1e69c7ed0045577dc"
+    )
+
+
+def test_problem_details_enter_config_and_hash(tmp_path: Path) -> None:
+    class Described(Sphere):
+        def __init__(self, dataset: str) -> None:
+            super().__init__(2)
+            self.dataset = dataset
+
+        def describe(self) -> dict[str, Any]:
+            return {"dataset_sha256": self.dataset}
+
+    spec = RunSpec("pilot", seed=1, budget=5)
+    docs = [ExperimentRunner.config_document(Described(d), UniformSampler(), spec) for d in "ab"]
+    assert docs[0]["problem"]["details"] == {"dataset_sha256": "a"}
+    assert canonical_hash(docs[0]) != canonical_hash(docs[1])
+    result = ExperimentRunner(ArtifactLayout(tmp_path)).run(Described("a"), UniformSampler(), spec)
+    config = yaml.safe_load((result.run_dir / "config.yaml").read_text(encoding="utf-8"))
+    assert config["problem"]["details"] == {"dataset_sha256": "a"}
+    assert result.metadata.config_hash == canonical_hash(docs[0])

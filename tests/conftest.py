@@ -23,6 +23,14 @@ def configs_dir() -> Path:
     return REPO_ROOT / "configs"
 
 
+@pytest.fixture
+def synthetic_mixed_task(monkeypatch: pytest.MonkeyPatch) -> str:
+    """The synthetic mixed-type HPO task from ``hpo_helpers``, registered for one test."""
+    from hpo_helpers import register_synthetic
+
+    return register_synthetic(monkeypatch)
+
+
 @pytest.fixture(autouse=True)
 def _reset_package_logger() -> Iterator[None]:
     """Undo ``configure_logging`` so handlers never leak between tests."""

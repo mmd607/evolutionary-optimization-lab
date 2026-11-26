@@ -146,6 +146,17 @@ class Problem(ABC):
     def name(self) -> str:
         return self._spec.name
 
+    def describe(self) -> dict[str, Any]:
+        """Definition details beyond the spec that change the objective function.
+
+        Returned values are JSON-serializable and become ``problem.details`` in a run's
+        ``config.yaml``, so they are part of the run's config hash. Data-backed problems (HPO
+        tasks) list their dataset checksum, split, CV, model and search space here. Analytic
+        benchmarks are fully defined by name and dimensions and return ``{}``; the key is then
+        omitted, which keeps their config hashes unchanged.
+        """
+        return {}
+
     @abstractmethod
     def evaluate_batch(self, candidates: FloatArray) -> ProblemOutput:
         """Evaluate a validated ``(n, n_variables)`` batch.
