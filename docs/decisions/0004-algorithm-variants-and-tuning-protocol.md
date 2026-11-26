@@ -58,7 +58,8 @@ single-objective problems, such as scalar HPO objectives in Phase 05.
   writing unvalidated custom versions is unnecessary.
 - **Optuna sampler (deferred to Phase 05).** Its "appropriate" domain is the HPO tasks, which do
   not exist until Phase 05. It will be added there behind the same ask/tell adapter pattern
-  (`study.ask` / `study.tell`), with the same invariant tests.
+  (`study.ask` / `study.tell`), with the same invariant tests. *Resolved 2026-11-25:* added as
+  `optuna_tpe` (ADR 0006, D10).
 
 ## Population sizes (open)
 

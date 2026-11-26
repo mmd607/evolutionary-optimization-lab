@@ -211,6 +211,21 @@ python -m evooptlab aggregate configs/studies/smoke.yaml   # runs.csv, summary.c
 Pilot and development results are labelled preliminary. Final-stage studies refuse to run from a
 dirty or unknown git tree. See `docs/decisions/0005-experiment-runner-and-fairness-checks.md`.
 
+Hyperparameter optimization on tabular tasks (`make hpo-smoke` runs the HPO smoke study on the
+bundled breast-cancer data; nothing is downloaded):
+
+```bash
+python -m evooptlab data info                                  # provenance, licence, checksum, cache status
+python -m evooptlab data fetch bank_marketing california_housing  # verified download into data/raw/ (gitignored)
+python -m evooptlab run configs/studies/hpo_pilot.yaml          # search sees cross-validation on training rows only
+python -m evooptlab test-eval configs/studies/hpo_pilot.yaml    # score each selected configuration once on test data
+python -m evooptlab diagnose configs/studies/hpo_pilot.yaml
+python -m evooptlab aggregate configs/studies/hpo_pilot.yaml
+```
+
+Datasets are never committed or redistributed. The leakage controls and their tests are described
+in `docs/decisions/0006-hpo-tasks-and-leakage-controls.md`.
+
 ## 11. Project status
 
 Progress is tracked per phase in [`docs/phase_status.md`](docs/phase_status.md). Foundation decisions,
