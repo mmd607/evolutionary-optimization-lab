@@ -6,6 +6,23 @@
 **Primary language:** Python  
 **Primary scope:** Multi-objective black-box optimization, evolutionary algorithms, and ML hyperparameter optimization.
 
+## Quick start
+
+```bash
+python -m venv .venv && source .venv/bin/activate        # Windows: .venv\Scripts\activate
+python -m pip install --upgrade "pip>=25.1"
+python -m pip install -c requirements/constraints-py312.txt -e ".[dashboard]" --group dev
+python -m pytest                                         # offline test suite
+make smoke                                               # or the four commands in section 10
+python -m streamlit run dashboard/app.py -- --root build/smoke
+```
+
+The full reproduction path (benchmarks, HPO, analysis, manuscript, dashboard) is in
+[`docs/reproduction_guide.md`](docs/reproduction_guide.md). **Status:** version 0.0.1 has
+pilot results only, and they are PRELIMINARY. Final runs wait on open protocol decisions (see
+section 11). The code is MIT-licensed (`LICENSE`); datasets keep their own licences and are not
+redistributed.
+
 ## 1. Project purpose
 
 EvoOptLab is a reproducible experimental framework for implementing, comparing, and analyzing optimization algorithms on:
@@ -140,6 +157,15 @@ evolutionary-optimization-lab/
 ├── LICENSE
 └── CITATION.cff
 ```
+
+The layout above is the planned target. In version 0.0.1:
+- `scripts/` and `notebooks/` are replaced by the `evooptlab` CLI (`evooptlab --help`);
+- `api/` and the `Dockerfile` are not built;
+- `reports/figures/`, `reports/tables/` and `reports/technical_report/` wait for final results.
+
+`build/` is the gitignored output location of the `make` targets. The deviations are recorded in
+`docs/decisions/0001-foundation-and-protocol-decisions.md` and
+`docs/decisions/0009-release-review.md`.
 
 ## 6. Expected final deliverables
 

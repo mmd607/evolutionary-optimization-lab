@@ -4,8 +4,14 @@ Usage (from the repository root)::
 
     python dashboard/check_launch.py --root ARTIFACT_ROOT [--port 8599] [--timeout 90]
 
-Exit code 0 when the server answered its health check and served the app page, 1 otherwise.
-Used by CI and ``make dashboard-check``; it reads the artifact root and writes nothing.
+Exit code 0 when the dashboard's modules import with this interpreter, and the server answered
+its health check and served the app page; 1 otherwise. Used by CI and ``make dashboard-check``;
+it reads the artifact root and writes nothing.
+
+What it does *not* prove: Streamlit runs a page's code only when a browser session connects, so
+rendering is not exercised here. Rendering of every page is covered by the AppTest tests in
+``tests/integration/test_dashboard.py``. The import check catches an environment in which the
+server starts but the app cannot load (for example, ``evooptlab`` not installed).
 """
 
 from __future__ import annotations
@@ -46,12 +52,28 @@ def _get(url: str) -> str:
         return str(response.read().decode("utf-8"))
 
 
+def imports_ok() -> bool:
+    """The app's modules import with this interpreter, as the server will run them."""
+    code = (
+        "import sys; sys.path.insert(0, sys.argv[1]); "
+        "import evooptlab.explorer, evodash.common, evodash.charts"
+    )
+    result = subprocess.run(  # fixed command, no shell
+        [sys.executable, "-c", code, str(APP.parent)], capture_output=True, text=True
+    )
+    if result.returncode != 0:
+        print("dashboard modules do not import:\n" + result.stderr[-2000:])
+    return result.returncode == 0
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     parser.add_argument("--root", required=True)
     parser.add_argument("--port", type=int, default=8599)
     parser.add_argument("--timeout", type=float, default=90.0)
     args = parser.parse_args(argv)
+    if not imports_ok():
+        return 1
     proc = subprocess.Popen(  # fixed command, no shell
         command(args.root, args.port),
         stdout=subprocess.PIPE,

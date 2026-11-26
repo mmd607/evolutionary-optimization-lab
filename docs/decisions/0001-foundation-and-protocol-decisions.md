@@ -42,7 +42,7 @@ Pilot results are preliminary, must be labelled as such, and are never pooled wi
 
 | ID | Question | Where it shows up | Needed by |
 |---|---|---|---|
-| P1 | Which license should the repository use? | `pyproject.toml` has no license; no `LICENSE` file | Before any public release (Phase 08); ideally now |
+| P1 | Which license should the repository use? **Decided 2026-11-26: MIT** (ADR 0009). | `LICENSE`, `pyproject.toml` `license = "MIT"` | Done |
 | P2 | Who are the citation authors? CFF 1.2.0 requires `authors`. | `CITATION.cff` (left as authored) | Phase 08 |
 | P3 | Wine Quality: classification or regression, and which target metric? | `configs/hpo_tasks.yaml` → `task_type`, `target_metric` placeholders | Phase 05 |
 | P4 | Per-task split strategy (stratified / group / temporal)? | `configs/hpo_tasks.yaml` → `split.strategy: task_specific` | Phase 05 |

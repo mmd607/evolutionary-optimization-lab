@@ -37,6 +37,8 @@ def _pyplot() -> Any:
     import matplotlib
 
     matplotlib.use("Agg")
+    # SVG element ids are random unless salted; a fixed salt makes SVGs byte-stable (tested).
+    matplotlib.rcParams["svg.hashsalt"] = "evooptlab"
     import matplotlib.pyplot as plt
 
     return plt
