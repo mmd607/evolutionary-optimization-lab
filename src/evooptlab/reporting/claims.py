@@ -167,16 +167,18 @@ def audit(
         if in_code:
             continue
         if stripped.startswith("#"):
-            heading = re.sub(r"^#+\s*(\d+(\.\d+)*\.?\s*)?", "", stripped).lower()
-            section = heading
+            level = len(stripped) - len(stripped.lstrip("#"))
+            if level <= 2:  # subsections stay inside their section's rules
+                section = re.sub(r"^#+\s*(\d+(\.\d+)*\.?\s*)?", "", stripped).lower()
             continue
-        for key in CITATION.findall(line):
+        code_free = re.sub(r"`[^`]*`", " ", line)  # examples in inline code are not references
+        for key in CITATION.findall(code_free):
             n_citations += 1
             if key not in lit:
                 add("FAIL", number, "citation", f"[@{key}] is not in the literature matrix")
             elif not lit[key]:
                 add("FAIL", number, "citation", f"[@{key}] is not verified (verified != yes)")
-        for key, _fmt in VALUE.findall(line):
+        for key, _fmt in VALUE.findall(code_free):
             n_values += 1
             entry = store.get(key)
             if entry is None:

@@ -79,6 +79,7 @@ def test_clean_draft_passes(repo: Path) -> None:
     [
         ("# Results\n\nIGD+ fell to 0.012.", "number"),
         ("# Abstract\n\nWe ran 20 seeds.", "number"),
+        ("## 6. Results\n\n### 6.1 RQ1\n\nNSGA-II reached 0.9.", "number"),
         ("# Intro\n\nA novel framework.", "wording"),
         ("# Intro\n\nState-of-the-art results.", "wording"),
         ("# Results\n\nA was significantly better.", "wording"),
@@ -89,6 +90,11 @@ def test_clean_draft_passes(repo: Path) -> None:
 )
 def test_failing_rules(repo: Path, body: str, rule: str) -> None:
     assert ("FAIL", rule) in _audit(repo, _write(repo, body, []))
+
+
+def test_examples_in_inline_code_are_not_references(repo: Path) -> None:
+    body = "# Intro\n\nWrite `{{value:KEY}}` and cite with `[@key]`."
+    assert _audit(repo, _write(repo, body, [])) == []
 
 
 def test_significance_with_corrected_p_value_is_allowed(repo: Path) -> None:
