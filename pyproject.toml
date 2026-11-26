@@ -1,5 +1,5 @@
 [build-system]
-requires = ["hatchling>=1.25"]
+requires = ["hatchling>=1.27"]  # 1.27: PEP 639 license expression and license-files
 build-backend = "hatchling.build"
 
 [project]
@@ -8,8 +8,9 @@ version = "0.0.1"
 description = "Reproducible, budget-aware evaluation of evolutionary and model-based optimization."
 readme = "README.md"
 requires-python = ">=3.11,<3.13"
-# License intentionally unset: pending a decision by the repository owner
-# (see docs/decisions/0001-foundation-and-protocol-decisions.md).
+# Licence chosen by the repository owner (P1, docs/decisions/0009-release-review.md).
+license = "MIT"
+license-files = ["LICENSE"]
 authors = [{ name = "mohammad homaiyan" }]
 classifiers = [
     "Programming Language :: Python :: 3",
