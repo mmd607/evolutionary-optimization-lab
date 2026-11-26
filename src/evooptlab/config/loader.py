@@ -11,21 +11,23 @@ import yaml
 from pydantic import BaseModel, ValidationError
 
 from evooptlab.config.schemas import (
+    AnalysisPlanFile,
     AnyConfig,
     BenchmarksFile,
     ExperimentsFile,
     HPOTasksFile,
+    ReportingFile,
     StudyFile,
     unresolved_fields,
 )
 
-_SCHEMAS_BY_ROOT_KEY: dict[
-    str, type[BenchmarksFile | ExperimentsFile | HPOTasksFile | StudyFile]
-] = {
+_SCHEMAS_BY_ROOT_KEY: dict[str, type[AnyConfig]] = {
     "benchmark_suite": BenchmarksFile,
     "experiment": ExperimentsFile,
     "hpo": HPOTasksFile,
     "study": StudyFile,
+    "analysis_plan": AnalysisPlanFile,
+    "reporting": ReportingFile,
 }
 
 

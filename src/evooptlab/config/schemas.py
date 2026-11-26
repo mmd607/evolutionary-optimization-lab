@@ -361,7 +361,102 @@ class StudyFile(_StrictModel):
     study: StudyConfig
 
 
-AnyConfig: TypeAlias = BenchmarksFile | ExperimentsFile | HPOTasksFile | StudyFile
+# ---------------------------------------------------------------------------
+# configs/analysis_plan.yaml (P9) and configs/reporting.yaml
+# ---------------------------------------------------------------------------
+class PlanMetric(_StrictModel):
+    """A metric column of ``runs.csv`` and the direction in which it is better."""
+
+    name: Identifier
+    direction: Literal["minimize", "maximize"]
+    primary: bool = False
+
+
+class PairwiseTestConfig(_StrictModel):
+    """Per-problem pairwise comparison across replicates.
+
+    Replicates are paired because every algorithm of a problem runs on the same seeds (common
+    random numbers, ADR 0005 D2), so a paired test is justified.
+    """
+
+    test: Literal["wilcoxon_signed_rank"]
+    zero_method: Literal["wilcox", "pratt", "zsplit"]
+    alternative: Literal["two-sided"]
+    effect_size: Literal["vargha_delaney_a12"]
+    correction: Literal["holm"]
+    #: Holm family: every pairwise test of one metric on one problem, or of one metric overall.
+    correction_family: Literal["problem_metric", "metric"]
+
+
+class AcrossProblemsConfig(_StrictModel):
+    """Omnibus comparison over problems, using one summary value per (problem, algorithm)."""
+
+    test: Literal["friedman"]
+    block_statistic: Literal["median", "mean"]
+    posthoc: Literal["wilcoxon_signed_rank_holm"]
+    min_problems: Annotated[int, Field(ge=2)]
+
+
+class ConfidenceIntervalConfig(_StrictModel):
+    method: Literal["bootstrap_percentile"]
+    statistic: Literal["median", "mean"]
+    level: Annotated[float, Field(gt=0.0, lt=1.0)]
+    n_resamples: Annotated[int, Field(ge=100)]
+    seed: NonNegativeInt
+
+
+class AnalysisPlanConfig(_StrictModel):
+    """The statistical analysis plan. It must be ``frozen`` before final results are analysed.
+
+    ``status: proposal`` plans may analyse pilot and development aggregates only (labelled
+    preliminary). Final-stage aggregates require ``status: frozen`` from a committed, clean tree,
+    so the test plan cannot be chosen after looking at final results (protocol §9, P9).
+    """
+
+    name: Identifier
+    status: Literal["proposal", "frozen"]
+    alpha: Annotated[float, Field(gt=0.0, lt=1.0)]
+    benchmark_metrics: Annotated[list[PlanMetric], Field(min_length=1)]
+    hpo_metrics: Annotated[list[PlanMetric], Field(min_length=1)]
+    per_problem: PairwiseTestConfig
+    across_problems: AcrossProblemsConfig
+    confidence_interval: ConfidenceIntervalConfig
+    #: Fewer completed replicates than this in a cell makes that cell's tests "not run".
+    min_replicates: Annotated[int, Field(ge=2)]
+    missing_values: Literal["pairwise_complete"]
+
+    @model_validator(mode="after")
+    def _one_primary(self) -> AnalysisPlanConfig:
+        for label, metrics in (("benchmark", self.benchmark_metrics), ("hpo", self.hpo_metrics)):
+            names = [m.name for m in metrics]
+            if len(set(names)) != len(names):
+                raise ValueError(f"{label} metric names must be unique")
+            if sum(m.primary for m in metrics) != 1:
+                raise ValueError(f"exactly one {label} metric must be primary")
+        return self
+
+
+class AnalysisPlanFile(_StrictModel):
+    analysis_plan: AnalysisPlanConfig
+
+
+class ReportingConfig(_StrictModel):
+    """How generated tables and figures look. Never changes any number."""
+
+    figure_formats: Annotated[list[Literal["svg", "pdf", "png"]], Field(min_length=1)]
+    palette: Literal["okabe_ito"]
+    decimals: dict[Identifier, NonNegativeInt] = Field(default_factory=dict)
+    default_decimals: NonNegativeInt = 4
+    convergence_checkpoints: Annotated[int, Field(ge=2)]
+
+
+class ReportingFile(_StrictModel):
+    reporting: ReportingConfig
+
+
+AnyConfig: TypeAlias = (
+    BenchmarksFile | ExperimentsFile | HPOTasksFile | StudyFile | AnalysisPlanFile | ReportingFile
+)
 
 
 # ---------------------------------------------------------------------------

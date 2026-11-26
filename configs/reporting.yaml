@@ -1,0 +1,11 @@
+# Presentation of generated tables and figures (docs/tables_and_figures.md). ADR 0007.
+# These settings change how numbers are displayed, never the numbers: machine-readable outputs
+# keep full precision.
+reporting:
+  figure_formats: [svg, pdf]
+  palette: okabe_ito                # colour-blind safe; markers and line styles also differ
+  default_decimals: 4
+  decimals:
+    wall_clock_seconds: 1
+    n_failed_trials: 0
+  convergence_checkpoints: 20
