@@ -17,7 +17,7 @@ commit on top of it, so the branch tip is always that SHA plus the status-file c
 | 05 | `phase/05-hyperparameter-optimization` | PUBLISHED | `28b6d51` | Yes (`2a136eb` verified 2026-11-26) | Pending |
 | 06 | `phase/06-analysis-and-paper` | PUBLISHED | `728cd4b` | Yes (`7fd6841` verified 2026-11-26) | Pending |
 | 07 | `phase/07-dashboard` | PUBLISHED | `85c898f` | Yes (`7c38603` verified 2026-11-26) | Pending |
-| 08 | `phase/08-release-review` | NOT STARTED | — | No | Pending |
+| 08 | `phase/08-release-review` | READY FOR REVIEW | `63a13d6` | No | Pending |
 
 ## Phase 00 — Foundation
 
@@ -241,3 +241,40 @@ commit on top of it, so the branch tip is always that SHA plus the status-file c
 - **No final results exist.** The dashboard shows final-stage data once final runs are made
   (blocked on P3, P4, P5, P8, P9, P10).
 - **Gate:** owner reviews the dashboard before Phase 08 starts.
+
+## Phase 08 — Release review
+
+- **Base branch:** `origin/phase/07-dashboard` @ `dd64d90` (Phases 02–07 are not yet merged to
+  `main`)
+- **Review:** `docs/decisions/0009-release-review.md` gives every checklist item with the
+  evidence that was run.
+- **Owner decision:** P1 licence: **MIT** (`LICENSE`, PEP 639 metadata in `pyproject.toml`).
+- **Fixed during the review:**
+  - SVG figures were not byte-reproducible. Fixed with a fixed `svg.hashsalt`, and tested; two
+    reports from each real pilot are now byte-identical.
+  - The dashboard launch check could report a broken app as healthy. It now imports the app's
+    modules first.
+- **Added:** README quick start, `docs/reproduction_guide.md`, and consolidated known limitations
+  and future work.
+- **Audit results:**
+  - Clean installs pass: the core only (524 passed, 1 skipped), with the dashboard, and from a
+    built wheel.
+  - `pip-audit`: no known vulnerabilities in the pins.
+  - The full Git history has no secrets and no large or data files.
+  - All 145 pilot runs have complete metadata, and both pilots pass `diagnose`.
+  - The UCI dataset licences were re-confirmed as CC BY 4.0.
+  - The claims audit passes.
+- **Validation (local, Windows, Python 3.12, clean venv from a clean worktree at `63a13d6`):**
+  - Ruff lint and format PASS; MyPy strict PASS (115 files).
+  - Pytest PASS: 536 tests, 96.63 % branch coverage.
+  - Config validation, CI smoke, HPO smoke, report, dashboard launch and claims audit PASS.
+  - Every intermediate commit passes MyPy and Pytest on its own.
+- **Not run:** Python 3.11; GitHub Actions results (not inspected, because `gh` is not
+  authenticated).
+- **Release blockers:**
+  - P2 citation authors: `CITATION.cff` is invalid.
+  - CI not inspected.
+  - No final results (P3, P4, P5, P8, P9, P10).
+  - No verified literature.
+  - The California Housing licence is unverified.
+- **Not done (needs explicit approval):** no tag, release, merge or publication was made.
